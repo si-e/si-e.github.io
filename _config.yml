@@ -105,5 +105,5 @@ theme: very_simple
 deploy:
   type: git
   repo: https://github.com/si-e/si-e.github.io
-  branch: master
+  branch: main
   message: Update Hexo Static Content
