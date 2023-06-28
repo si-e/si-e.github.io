@@ -66,6 +66,9 @@ const enumColors = {
 	light_blue: "light_blue",
 	dark_purple: "dark_purple",
 	pink: "pink",
+	
+    black: "black",
+    ghost: "ghost",
 };
 
 /** @enum {string} */
@@ -87,6 +90,9 @@ const enumColorToShortcode = {
 	[enumColors.light_blue]: "h",
 	[enumColors.dark_purple]: "z",
 	[enumColors.pink]: "i",
+	
+    [enumColors.black]: "k",
+    [enumColors.ghost]: "s",
 };
 
 /** @enum {string} */
@@ -115,6 +121,9 @@ const enumColorsToHexCode = {
 	[enumColors.light_blue]: "#33d1ff",
 	[enumColors.dark_purple]: "#a186ff",
 	[enumColors.pink]: "#ee66b4",
+
+    [enumColors.black]: "#202020",
+    [enumColors.ghost]: "rgba(0, 0, 0, 0)",
 };
 
 /** @enum {enumColors} */
