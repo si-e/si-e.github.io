@@ -19,6 +19,8 @@ const enumSubShape = {
 	starwindmill: "starwindmill",
 };
 
+const enumCombinedShape = enumSubShape;
+
 /** @enum {string} */
 const enumSubShapeToShortcode = {
 	[enumSubShape.rect]: "R",
@@ -506,7 +508,7 @@ window.viewShape = (key) => {
 
 window.shareShape = () => {
 	const code = document.getElementById("code").value.trim();
-	const url = "https://sense101.github.io/shapez-industries-viewer?" + code;
+	const url = "https://si-e.github.io/viewer?" + code;
 	alert("You can share this url: " + url);
 };
 
@@ -552,3 +554,259 @@ window.randomShape = () => {
 	document.getElementById("code").value = code;
 	generate();
 };
+
+class RandomNumberGenerator {
+	choice(list) {
+		return list[getRandomInt(list.length)];
+	}
+
+	nextIntRange(min, max) {
+		return getRandomInt(max - min) + min;
+	}
+
+	next() {
+		return Math.random()
+	}	
+}
+
+window.computeFreeplayShape = (level=200) => {
+	let layers = [];
+
+	const rng = new RandomNumberGenerator();
+	const layerCount = rng.nextIntRange(1, 4 + 1);
+
+	const allColors = generateRandomColorSet(rng);
+
+	const colorWheel = [...Object.values(enumColors).slice()];
+	if (level <= 50 && colorWheel.includes(enumColors.uncolored)) {
+		colorWheel.splice(colorWheel.indexOf(enumColors.uncolored), 1);
+	}
+
+	const symmetries = [
+		[
+			// radial symmetry
+			[0, 2],
+			[1, 3],
+		],
+		[
+			// full round
+			[0, 1, 2, 3],
+		],
+	];
+	let availableShapes = [
+		enumSubShape.rect,
+		enumSubShape.circle,
+		enumSubShape.star,
+		enumCombinedShape.circlestar,
+		enumCombinedShape.rectcircle,
+		enumCombinedShape.starrect,
+	];
+	if (rng.next() < 0.5) {
+		availableShapes.push(
+			enumSubShape.windmill,
+			enumCombinedShape.circlewindmill,
+			enumCombinedShape.rectwindmill,
+			enumCombinedShape.starwindmill
+		); // windmill looks good only in radial symmetry
+	} else {
+		symmetries.push(
+			[
+				// horizontal axis
+				[0, 3],
+				[1, 2],
+			],
+			[
+				// vertical axis
+				[0, 1],
+				[2, 3],
+			],
+			[
+				// diagonal axis
+				[0, 2],
+				[1],
+				[3],
+			],
+			[
+				// other diagonal axis
+				[1, 3],
+				[0],
+				[2],
+			]
+		);
+	}
+
+	const randomShape = () => rng.choice(availableShapes);
+
+	let anyIsMissingTwo = false;
+
+	for (let i = 0; i < layerCount; ++i) {
+		const pickedSymmetry = rng.choice(symmetries); // pairs of quadrants that must be the same
+		const layer = [null, null, null, null];
+		const colors = allColors[i];
+
+		for (let j = 0; j < pickedSymmetry.length; ++j) {
+			const group = pickedSymmetry[j];
+			const shape = randomShape();
+			for (let k = 0; k < group.length; ++k) {
+				const quad = group[k];
+				layer[quad] = {
+					subShape: shape,
+					color: null,
+				};
+			}
+		}
+
+		let availableColors = colorWheel.slice();
+
+		for (let j = 0; j < colors.length; ++j) {
+			const group = colors[j];
+			const colorIndex = rng.nextIntRange(0, availableColors.length);
+			for (let k = 0; k < group.length; ++k) {
+				const quad = group[k];
+				if (layer[quad]) {
+					layer[quad].color = availableColors[colorIndex];
+				}
+			}
+			availableColors.splice(colorIndex, 1);
+		}
+
+		for (let j = 0; j < pickedSymmetry.length; ++j) {
+			const group = pickedSymmetry[j];
+			if (rng.next() > 0.75) {
+				// link stuff
+				const color = rng.choice(colorWheel);
+				for (let k = 0; k < group.length; ++k) {
+					const index = group[k];
+
+					if (!layer[index]) {
+						continue;
+					}
+					layer[index].color = color;
+
+					const quadBefore = (index + 3) % 4;
+					const quadAfter = (index + 1) % 4;
+					const linkedBefore = group.includes(quadBefore) && !!layer[quadBefore];
+					layer[index].linkedBefore = linkedBefore;
+
+					const linkedAfter = group.includes(quadAfter) && !!layer[quadAfter];
+					layer[index].linkedAfter = linkedAfter;
+				}
+			}
+		}
+
+		if (level > 100 && rng.next() > 0.9) {
+			layer[rng.nextIntRange(0, 4)] = null;
+		}
+
+		// Sometimes they actually are missing *two* ones!
+		// Make sure at max only one layer is missing it though, otherwise we could
+		// create an uncreateable shape
+		if (level > 150 && rng.next() > 0.9 && !anyIsMissingTwo) {
+			layer[rng.nextIntRange(0, 4)] = null;
+			anyIsMissingTwo = true;
+		}
+
+		// and afterwards update links
+		for (let quadrantIndex = 0; quadrantIndex < 4; ++quadrantIndex) {
+			const quadrant = layer[quadrantIndex];
+			if (quadrant) {
+				const lastQuadrant = layer[(quadrantIndex + 3) % 4];
+				const nextQuadrant = layer[(quadrantIndex + 1) % 4];
+				if (!lastQuadrant) {
+					quadrant.linkedBefore = false;
+				}
+				if (!nextQuadrant) {
+					quadrant.linkedAfter = false;
+				}
+			}
+		}
+
+		layers.push(layer);
+	}
+	let code = getShapeId(layers);
+	document.getElementById("code").value = code;
+	generate();
+}
+
+function generateRandomColorSet(rng) {
+    const allPositions = [];
+
+    for (let i = 0; i < 4; i++) {
+        const positions = [
+            [
+                [0, 1],
+                [2, 3],
+            ],
+            [
+                [1, 2],
+                [0, 3],
+            ],
+            [
+                [0, 2],
+                [1, 3],
+            ],
+        ];
+
+        const chance = rng.next();
+
+        if (chance > 0.8) {
+            positions.push([[0, 1, 2, 3]]);
+        }
+
+        allPositions.push(rng.choice(positions));
+    }
+
+    return allPositions;
+}
+
+function getShapeId(layers) {
+	let id = "";
+	for (let layerIndex = 0; layerIndex < layers.length; ++layerIndex) {
+		const layer = layers[layerIndex];
+
+		let layerId = "";
+		for (let index = 0; index < 4; ++index) {
+			const item = layer[index];
+			const lastItem = layer[(index + 3) % 4];
+			if (item) {
+				const shapeCode = enumSubShapeToShortcode[item.subShape];
+				const colorCode = enumColorToShortcode[item.color];
+				if (item.linkedBefore) {
+					// assert(lastItem, "Item is linked but the item before is null");
+					if (item.subShape == lastItem.subShape) {
+						layerId += "_";
+					} else {
+						layerId += shapeCode;
+					}
+					layerId += "_";
+
+					if (layerId == "________") {
+						layerId = shapeCode + colorCode + "______";
+					}
+					const colors = [...layerId].filter((value, index) => index % 2 == 1).join("");
+					if (colors == "____") {
+						let firstShapePos = 0;
+						for (let i = 6; i >= 0; i -= 2) {
+							if (layerId[i] != "_") {
+								firstShapePos = i;
+							}
+						}
+						const part1 = layerId.slice(0, firstShapePos + 1);
+						const part2 = layerId.slice(firstShapePos + 2);
+						layerId = part1 + colorCode + part2;
+					}
+				} else {
+					layerId += shapeCode + enumColorToShortcode[item.color];
+				}
+			} else {
+				layerId += "--";
+			}
+		}
+		id += layerId;
+
+		if (layerIndex < layers.length - 1) {
+			id += ":";
+		}
+	}
+	return id;
+}
