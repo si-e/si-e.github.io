@@ -509,7 +509,8 @@ window.viewShape = (key) => {
 window.shareShape = () => {
 	const code = document.getElementById("code").value.trim();
 	const url = "https://si-e.github.io/viewer?" + code;
-	alert("You can share this url: " + url);
+	navigator.clipboard.writeText(url);
+	alert("You can paste this url: \n" + url);
 };
 
 function getRandomInt(max) {
@@ -726,7 +727,7 @@ window.computeFreeplayShape = (level=200) => {
 	let code = getShapeId(layers);
 	document.getElementById("code").value = code;
 	generate();
-}
+};
 
 function generateRandomColorSet(rng) {
     const allPositions = [];
