@@ -215,8 +215,8 @@ function fromShortKey(key) {
 		}
 
 		// now loop through items to complete links
-		for (let itemIndex = 0; itemIndex < 4; ++itemIndex) {
-			const item = items[itemIndex];
+		for (let itemIndex = 0; itemIndex < 8; ++itemIndex) {
+			const item = items[itemIndex % 4];
 			const lastItem = items[(itemIndex + 3) % 4];
 
 			let lastFullItem;
