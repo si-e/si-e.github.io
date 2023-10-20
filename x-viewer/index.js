@@ -310,7 +310,7 @@ function renderShape(layers) {
 	
 	const quadrantSize = 10;
 
-	context.fillStyle = "rgba(47, 79, 79, 0.5)";  // New color for the substrate circle.
+	context.fillStyle = "rgba(57, 99, 99, 0.3)";  // New color for the substrate circle.
 	// context.beginCircle(0, 0, quadrantSize * 1.15);
 	const A = quadrantSize * 1.15
 	context.beginRoundedRect(-A, -A, A * 2, A * 2, A * 0.5);
