@@ -463,9 +463,9 @@ function getRandomInt(max) {
 	return Math.floor(Math.random() * Math.floor(max));
 }
 
-function getRandomShape() {
+function getRandomShape(allowEmpty=true) {
 	let shapes = Object.values(enumSubShapeToShortcode);
-	shapes.push("-");
+	if (allowEmpty) shapes.push("-");
 	return shapes[getRandomInt(shapes.length)];
 }
 
@@ -526,160 +526,31 @@ class RandomNumberGenerator {
 }
 
 window.computeFreeplayShape = (level=200) => {
-	let layers = [];
+	// let layers = getRandomInt(maxLayer);
+	let layers = 1;
+	let code = "";
+	for (var i = 0; i < layers; i++) {
+		let layertext = "";
+		let a = 0;
+		while (a < 12) {
+			var randomShape = getRandomShape(false);
+			// let randomColor = getRandomColor();
+			let randomColor = "u";
 
-	const rng = new RandomNumberGenerator();
-	const layerCount = rng.nextIntRange(1, 4 + 1);
-
-	const allColors = generateRandomColorSet(rng);
-
-	const colorWheel = [...Object.values(enumColors).slice()];
-	if (level <= 50 && colorWheel.includes(enumColors.uncolored)) {
-		colorWheel.splice(colorWheel.indexOf(enumColors.uncolored), 1);
+			if (randomShape === "1") {
+				a += 1;
+			} else if (randomShape === "2") {
+				if (a + 2 > 12) continue;
+				a += 2;
+			}
+			layertext = layertext + randomShape + randomColor;
+		}
+		if (randomShape === "2" && getRandomShape(true) === "-") {
+			layertext = "--" + layertext;
+		}
+		code = code + layertext + ":";
 	}
-
-	const symmetries = [
-		[
-			// radial symmetry
-			[0, 2],
-			[1, 3],
-		],
-		[
-			// full round
-			[0, 1, 2, 3],
-		],
-	];
-	let availableShapes = [
-		enumSubShape.rect,
-		enumSubShape.circle,
-		enumSubShape.star,
-		enumCombinedShape.circlestar,
-		enumCombinedShape.rectcircle,
-		enumCombinedShape.starrect,
-	];
-	if (rng.next() < 0.5) {
-		availableShapes.push(
-			enumSubShape.windmill,
-			enumCombinedShape.circlewindmill,
-			enumCombinedShape.rectwindmill,
-			enumCombinedShape.starwindmill
-		); // windmill looks good only in radial symmetry
-	} else {
-		symmetries.push(
-			[
-				// horizontal axis
-				[0, 3],
-				[1, 2],
-			],
-			[
-				// vertical axis
-				[0, 1],
-				[2, 3],
-			],
-			[
-				// diagonal axis
-				[0, 2],
-				[1],
-				[3],
-			],
-			[
-				// other diagonal axis
-				[1, 3],
-				[0],
-				[2],
-			]
-		);
-	}
-
-	const randomShape = () => rng.choice(availableShapes);
-
-	let anyIsMissingTwo = false;
-
-	for (let i = 0; i < layerCount; ++i) {
-		const pickedSymmetry = rng.choice(symmetries); // pairs of quadrants that must be the same
-		const layer = [null, null, null, null];
-		const colors = allColors[i];
-
-		for (let j = 0; j < pickedSymmetry.length; ++j) {
-			const group = pickedSymmetry[j];
-			const shape = randomShape();
-			for (let k = 0; k < group.length; ++k) {
-				const quad = group[k];
-				layer[quad] = {
-					subShape: shape,
-					color: null,
-				};
-			}
-		}
-
-		let availableColors = colorWheel.slice();
-
-		for (let j = 0; j < colors.length; ++j) {
-			const group = colors[j];
-			const colorIndex = rng.nextIntRange(0, availableColors.length);
-			for (let k = 0; k < group.length; ++k) {
-				const quad = group[k];
-				if (layer[quad]) {
-					layer[quad].color = availableColors[colorIndex];
-				}
-			}
-			availableColors.splice(colorIndex, 1);
-		}
-
-		for (let j = 0; j < pickedSymmetry.length; ++j) {
-			const group = pickedSymmetry[j];
-			if (rng.next() > 0.75) {
-				// link stuff
-				const color = rng.choice(colorWheel);
-				for (let k = 0; k < group.length; ++k) {
-					const index = group[k];
-
-					if (!layer[index]) {
-						continue;
-					}
-					layer[index].color = color;
-
-					const quadBefore = (index + 3) % 4;
-					const quadAfter = (index + 1) % 4;
-					const linkedBefore = group.includes(quadBefore) && !!layer[quadBefore];
-					layer[index].linkedBefore = linkedBefore;
-
-					const linkedAfter = group.includes(quadAfter) && !!layer[quadAfter];
-					layer[index].linkedAfter = linkedAfter;
-				}
-			}
-		}
-
-		if (level > 100 && rng.next() > 0.9) {
-			layer[rng.nextIntRange(0, 4)] = null;
-		}
-
-		// Sometimes they actually are missing *two* ones!
-		// Make sure at max only one layer is missing it though, otherwise we could
-		// create an uncreateable shape
-		if (level > 150 && rng.next() > 0.9 && !anyIsMissingTwo) {
-			layer[rng.nextIntRange(0, 4)] = null;
-			anyIsMissingTwo = true;
-		}
-
-		// and afterwards update links
-		for (let quadrantIndex = 0; quadrantIndex < 4; ++quadrantIndex) {
-			const quadrant = layer[quadrantIndex];
-			if (quadrant) {
-				const lastQuadrant = layer[(quadrantIndex + 3) % 4];
-				const nextQuadrant = layer[(quadrantIndex + 1) % 4];
-				if (!lastQuadrant) {
-					quadrant.linkedBefore = false;
-				}
-				if (!nextQuadrant) {
-					quadrant.linkedAfter = false;
-				}
-			}
-		}
-
-		layers.push(layer);
-	}
-	let code = getShapeId(layers);
+	code = code.replace(/:+$/, "");
 	document.getElementById("code").value = code;
 	generate();
 };
