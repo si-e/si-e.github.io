@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      X-shape viewer
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index.css" media="all" />
+    <script async src="index.js"></script>
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="https://si-e.github.io/x-viewer/res/favicon.ico"
+    />
+
+    <!-- just include all variants for ease of use -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <h1>X-shape generator</h1>
+    <div class="grid">
+      <div class="col">
+        <input
+          value="1u2u1u2u1u2u1u2u"
+          id="code"
+          placeholder="shape code"
+          onkeypress="debounce(generate)"
+          onkeydown="debounce(generate)"
+          onkeyup="debounce(generate)"
+          onchange="debounce(generate)"
+        />
+        <div id="error">Error</div>
+        <br />
+
+        <div id="resultWrapper">
+          <canvas id="result" width="384" height="384"></canvas>
+        </div>
+        <button onclick="exportShape()">Export</button>
+        <button onclick="shareShape()">Share</button>
+        <!-- <button onclick="computeFreeplayShape()">Freeplay_Shape</button> -->
+        <button onclick="randomShape()">Randomize</button>
+      </div>
+      <div class="col infoBox">
+        <h2>About</h2>
+
+        <p>
+          With this tool you can generate any shape from X-shape! This
+          can be useful to analyze shapes or draft new ones.
+        </p>
+
+        <h3>Instructions</h3>
+
+        <p>
+          Shapes can be generated with a <strong>short key</strong>.
+          Each shape consists of up to <strong>1 or more</strong> layers, and each layers consists of <strong>12</strong>
+          quadrants. Shape codes start from the upper right quadrant and move clockwise.
+        </p>
+        <br />
+        <p>
+          One subShape may consist of <strong>one or two</strong> quadrants.
+          Each subShape is described via a pair of letters -
+          A <strong>number describing the shape</strong>, followed by
+          a <strong>lowercase letter describing its color</strong>. If the
+          quadrant is empty, <code>--</code> is used.
+        </p>
+        <br />
+        <p>
+          Layers are separated via <code>:</code>, starting with the
+          lowest layer.
+        </p>
+
+        <div class="grid shapeCodes">
+          <div class="col">
+            <h3>Shape codes</h3>
+            <table>
+              <tr><td><br></td></tr>
+              <tr><td><code>1</code></td><td>30 degrees from one side of a rectangle. </td></tr>
+              <tr><td><br></td></tr>
+              <tr><td><br></td></tr>
+              <tr><td><code>2</code></td><td>60 degrees from one corner of a rectangle. </td></tr>
+            </table>
+          </div>
+          <div class="col">
+            <h3>Color codes</h3>
+            <table>
+              <tr>
+                <td><code>r</code></td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>Red</td>
+                <td>&nbsp;</td>
+                <td><code>o</code></td>
+                <td><span class="colorPreview" style="background: #fdad4a;"></span></td>
+                <td>Orange</td>
+              </tr>
+              <tr>
+                <td><code>g</code></td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>Green</td>
+                <td>&nbsp;</td>
+                <td><code>l</code></td>
+                <td><span class="colorPreview" style="background: #bafa48;"></span></td>
+                <td>Light Green</td>
+              </tr>
+              <tr>
+                <td><code>b</code></td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>Blue</td>
+                <td>&nbsp;</td>
+                <td><code>m</code></td>
+                <td><span class="colorPreview" style="background: #3cfdb2;"></span></td>
+                <td>Mint</td>
+              </tr>
+
+              <tr>
+                <td><code>y</code></td>
+                <td><span class="colorPreview" style="background: #fcf52a;"></span></td>
+                <td>Yellow</td>
+                <td>&nbsp;</td>
+                <td><code>h</code></td>
+                <td><span class="colorPreview" style="background: #33d1ff;"></span></td>
+                <td>Light Blue</td>
+              </tr>
+
+              <tr>
+                <td><code>p</code></td>
+                <td><span class="colorPreview" style="background: #dd66ff;"></span></td>
+                <td>Purple</td>
+                <td>&nbsp;</td>
+                <td><code>z</code></td>
+                <td><span class="colorPreview" style="background: #a186ff;"></span></td>
+                <td>Dark Purple</td>
+              </tr>
+
+              <tr>
+                <td><code>c</code></td>
+                <td><span class="colorPreview" style="background: #00fcff;"></span></td>
+                <td>Cyan</td>
+                <td>&nbsp;</td>
+                <td><code>i</code></td>
+                <td><span class="colorPreview" style="background: #ee66b4;"></span></td>
+                <td>Pink</td>
+              </tr>
+
+              <tr>
+                <td><code>u</code></td>
+                <td><span class="colorPreview" style="background: #aaaaaa;"></span></td>
+                <td>Uncolored</td>
+                <td>&nbsp;</td>
+                <td><code>k</code></td>
+                <td><span class="colorPreview" style="background: #202020;"></span></td>
+                <td>Black</td>
+              </tr>
+
+              <tr>
+                <td><code>w</code></td>
+                <td><span class="colorPreview" style="background: #ffffff;"></span></td>
+                <td>White</td>
+                <td>&nbsp;</td>
+                <td><code>s</code></td>
+                <td><span class="colorPreview" style="background: rgba(0, 0, 0, 0);"></span></td>
+                <td>Ghost</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <h3>Examples</h3>
+
+        <script>
+          const examples = [
+            ["--2r2r2r2r2r2r", "Red hexagonal star"],
+            ["1u1u1u1u1u1u1u1u1u1u1u1u", "Gray dodecagon"],
+            ["1b1b1b1b1b1b1b1b1b1b2b", "Blueprint shape"],
+            ["1g2u1g2u1g2u1g2u", "Ben 10 shape"],
+          ];
+          for (let i = 0; i < examples.length; ++i) {
+            const [key, desc] = examples[i];
+            document.write(`
+                <div class="example">
+                    <code>${key}</code><label>${desc}</label>
+                    <button onclick='viewShape(\"${key}\")'>View</button>
+                    </div>
+            `);
+          }
+        </script>
+		<div class="example">
+            <code></code><label>Random Shape</label>
+            <button onclick="randomShape()">Randomize</button>
+          </div>
+      </div>
+    </div>
+  </body>
+</html>
