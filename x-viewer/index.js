@@ -44,70 +44,91 @@ const enumColors = {
 	light_blue: "light_blue",
 	dark_purple: "dark_purple",
 	pink: "pink",
-	
-    black: "black",
-    ghost: "ghost",
+
+	black: "black",
+	ghost: "ghost",
 };
+const c = enumColors;
 
 /** @enum {string} */
 const enumColorToShortcode = {
-	[enumColors.red]: "r",
-	[enumColors.green]: "g",
-	[enumColors.blue]: "b",
+	[c.red]: "r",
+	[c.green]: "g",
+	[c.blue]: "b",
 
-	[enumColors.yellow]: "y",
-	[enumColors.purple]: "p",
-	[enumColors.cyan]: "c",
+	[c.yellow]: "y",
+	[c.purple]: "p",
+	[c.cyan]: "c",
 
-	[enumColors.white]: "w",
-	[enumColors.uncolored]: "u",
+	[c.white]: "w",
+	[c.uncolored]: "u",
 
-	[enumColors.orange]: "o",
-	[enumColors.light_green]: "l",
-	[enumColors.mint]: "m",
-	[enumColors.light_blue]: "h",
-	[enumColors.dark_purple]: "z",
-	[enumColors.pink]: "i",
-	
-    [enumColors.black]: "k",
-    [enumColors.ghost]: "s",
+	[c.orange]: "o",
+	[c.light_green]: "l",
+	[c.mint]: "m",
+	[c.light_blue]: "h",
+	[c.dark_purple]: "z",
+	[c.pink]: "i",
+
+	[c.black]: "k",
+	[c.ghost]: "s",
 };
 
 /** @enum {string} */
 const enumColorsToHexCode = {
-	[enumColors.red]: "#ff666a",
-	[enumColors.green]: "#78ff66",
-	[enumColors.blue]: "#66a7ff",
+	[c.red]: "#ff666a",
+	[c.green]: "#78ff66",
+	[c.blue]: "#66a7ff",
 
 	// red + green
-	[enumColors.yellow]: "#fcf52a",
+	[c.yellow]: "#fcf52a",
 
 	// red + blue
-	[enumColors.purple]: "#dd66ff",
+	[c.purple]: "#dd66ff",
 
 	// blue + green
-	[enumColors.cyan]: "#87fff5",
+	[c.cyan]: "#87fff5",
 
 	// blue + green + red
-	[enumColors.white]: "#ffffff",
+	[c.white]: "#ffffff",
 
-	[enumColors.uncolored]: "#aaaaaa",
+	[c.uncolored]: "#aaaaaa",
 
-	[enumColors.orange]: "#fdad4a",
-	[enumColors.light_green]: "#bafa48",
-	[enumColors.mint]: "#3cfdb2",
-	[enumColors.light_blue]: "#33d1ff",
-	[enumColors.dark_purple]: "#a186ff",
-	[enumColors.pink]: "#ee66b4",
+	[c.orange]: "#fdad4a",
+	[c.light_green]: "#bafa48",
+	[c.mint]: "#3cfdb2",
+	[c.light_blue]: "#33d1ff",
+	[c.dark_purple]: "#a186ff",
+	[c.pink]: "#ee66b4",
 
-    [enumColors.black]: "#202020",
-    [enumColors.ghost]: "rgba(0, 0, 0, 0)",
+	[c.black]: "#202020",
+	[c.ghost]: "rgba(0, 0, 0, 0)",
 };
 
 /** @enum {enumColors} */
 const enumShortcodeToColor = {};
 for (const key in enumColorToShortcode) {
 	enumShortcodeToColor[enumColorToShortcode[key]] = key;
+}
+
+/** @enum {Object.<string, string>} */
+const enumColorMixingResults = {};
+
+const bitfieldToColor = [
+    /* 000 */ c.uncolored,
+    /* 001 */ c.red,
+    /* 010 */ c.green,
+    /* 011 */ c.yellow,
+    /* 100 */ c.blue,
+    /* 101 */ c.purple,
+    /* 110 */ c.cyan,
+    /* 111 */ c.white,
+];
+for (let i = 0; i < 1 << 3; ++i) {
+    enumColorMixingResults[bitfieldToColor[i]] = {};
+    for (let j = 0; j < 1 << 3; ++j) {
+        enumColorMixingResults[bitfieldToColor[i]][bitfieldToColor[j]] = bitfieldToColor[i | j];
+    }
 }
 
 CanvasRenderingContext2D.prototype.beginCircle = function (x, y, r) {
@@ -305,9 +326,9 @@ function renderShape(layers) {
 
 	context.translate((w * dpi) / 2, (h * dpi) / 2);
 	context.scale((dpi * w) / 26, (dpi * h) / 26);
-	
+
 	context.fillStyle = "#e9ecf7";
-	
+
 	const quadrantSize = 10;
 
 	context.fillStyle = "rgba(57, 99, 99, 0.3)";  // New color for the substrate circle.
@@ -317,7 +338,7 @@ function renderShape(layers) {
 	context.fill();
 
 	context.rotate(radians(-90));
-	
+
 	for (let layerIndex = 0; layerIndex < layers.length; ++layerIndex) {
 		const quadrants = layers[layerIndex];
 
@@ -349,13 +370,13 @@ function renderShape(layers) {
 					context.closePath();
 					context.fill();
 					context.stroke();
-				
+
 					context.rotate(radians(30));
 					break;
 				}
 				case enumSubShape.X60: {
 					context.rotate(radians(-30));
-				
+
 					context.beginPath();
 					const dims = quadrantSize * layerScale;
 					const moveInwards = dims * Math.tan(radians(30 / 2));
@@ -366,7 +387,7 @@ function renderShape(layers) {
 					context.closePath();
 					context.fill();
 					context.stroke();
-				
+
 					context.rotate(radians(60));
 					break;
 				}
@@ -463,7 +484,7 @@ function getRandomInt(max) {
 	return Math.floor(Math.random() * Math.floor(max));
 }
 
-function getRandomShape(allowEmpty=true) {
+function getRandomShape(allowEmpty = true) {
 	let shapes = Object.values(enumSubShapeToShortcode);
 	if (allowEmpty) shapes.push("-");
 	return shapes[getRandomInt(shapes.length)];
@@ -511,107 +532,160 @@ window.randomShape = () => {
 	generate();
 };
 
-class RandomNumberGenerator {
-	choice(list) {
-		return list[getRandomInt(list.length)];
-	}
-
-	nextIntRange(min, max) {
-		return getRandomInt(max - min) + min;
-	}
-
-	next() {
-		return Math.random()
-	}	
+function choice(list) {
+	return list[getRandomInt(list.length)];
 }
 
-window.computeFreeplayShape = (level=200) => {
+function nextIntRange(min, max) {
+	return getRandomInt(max - min) + min;
+}
+
+
+function longestPalindrome(str) {
+	function isPalindrome(str) {
+		const reversed = str.split('').reverse().join('');
+		return str === reversed;
+	}
+
+	let longest = '', longest_i = 0;
+	for (let i = 0; i < str.length; i++) {
+		for (let j = i + 1; j < str.length; j++) {
+			const substring = str.slice(i, j + 1);
+			if (isPalindrome(substring) && substring.length > longest.length) {
+				longest = substring;
+				longest_i = i;
+			}
+		}
+	}
+	return [longest, longest_i];
+}
+
+function longestRepeatedSubstring(str) {
+	let longest = '', longest_i = 0, longest_r = 0;
+	for (let i = 0; i < str.length; i++) {
+		for (let j = i + 1; j < str.length; j++) {
+			const substring = str.slice(i, j + 1);
+			if (str.includes(substring, i + 1) && substring.length > longest.length) {
+				longest = substring;
+				longest_i = i;
+				longest_r = str.indexOf(substring, i + 1);
+			}
+		}
+	}
+	return [longest, longest_i, longest_r];
+}
+
+function findFeature(subShapes, acceptRandom = false) {
+	const s = subShapes.map(i => i.repeat(i)).join('');
+
+	const [S, S_i] = longestPalindrome(s + s.slice(0, 6));
+	const halfS = S.length / 2;
+	// const symmetricW = S.length * S.length;
+	const symmetricW = halfS * halfS;
+	const [R, R_i, R_r] = longestRepeatedSubstring(s + s.slice(0, 3));
+	const repeatedW = R.length * R.length;
+	const randomizedW = acceptRandom ? 9 : 0;
+	const rand = getRandomInt(symmetricW + repeatedW + randomizedW);
+
+	logger = console;
+	if (rand < symmetricW) {
+		logger.log("symmetric", S, S_i);
+		const group1 = [], group2 = [[], []];
+		for (let i = 0; i < halfS; i++) {
+			const a = S_i + i;
+			const b = S_i + S.length - 1 - i;
+			group1.push([a, b]);
+			group2[0].push(a);
+			group2[1].push(b);
+		}
+		return [group1, group2];
+	} else if (rand < symmetricW + repeatedW) {
+		logger.log("repeated", R, R_i, R_r);
+		const group1 = [], group2 = [[], []];
+		for (let i = 0; i < R.length; i++) {
+			const a = R_i + i;
+			const b = R_r + i;
+			group1.push([a, b]);
+			group2[0].push(a);
+			group2[1].push(b);
+		}
+		return [group1, group2];
+	} else {
+		const partNum = getRandomInt(2) + 2;  // [2,3]
+		const group = Array.from({ length: partNum }, () => []);
+		Array(12).fill(0).forEach(
+			(_, index) => group[getRandomInt(partNum)].push(index)
+		);
+		logger.log("randomized", group);
+		return [group];
+	}
+}
+
+
+window.computeFreeplayShape = (level = 100) => {
 	// let layers = getRandomInt(maxLayer);
 	let layers = 1;
 	let code = "";
-	for (var i = 0; i < layers; i++) {
-		let layertext = "";
-		let a = 0;
-		while (a < 12) {
-			var randomShape = getRandomShape(false);
-			// let randomColor = getRandomColor();
-			let randomColor = "u";
+	for (var layerIndex = 0; layerIndex < layers; layerIndex++) {
+		const quads = Array(12).fill(null);
 
-			if (randomShape === "1") {
-				a += 1;
-			} else if (randomShape === "2") {
-				if (a + 2 > 12) continue;
-				a += 2;
+		// subShape
+		const num2 = getRandomInt(7); // [0, 6]
+		const subShapes = shuffle(Array(num2).fill('2').concat(Array(12 - 2 * num2).fill('1')));
+		let angle = 0;
+		for (let subShape of subShapes) {
+			if (subShape == '1') {
+				quads[angle++] = { subShape: '1', color: c.uncolored};
+			} else {
+				quads[angle++] = { subShape: '2', color: c.uncolored};
+				quads[angle++] = { subShape: '2', color: c.uncolored};
 			}
-			layertext = layertext + randomShape + randomColor;
 		}
-		if (randomShape === "2" && getRandomShape(true) === "-") {
+
+		// color
+		let groups = findFeature(subShapes, level > 50);
+		if (true || level <= 50) {
+			groups = [choice(groups)];  // simple color group
+		}
+		const colorSet = [
+			c.uncolored, c.uncolored, c.uncolored,
+			c.red, c.green, c.blue,
+			c.purple, c.cyan, c.yellow
+		];
+		const colorWheel = shuffle(colorSet).slice(0, 4);  // most 4 colors in one layer
+		var color = choice(colorWheel);
+		for (let group of groups) {
+			for (let part of group) {
+				if (getRandomInt(2) == 0) {
+					color = choice(colorWheel);
+				}
+				part.forEach(i => {
+					const oriColor = quads[i % 12].color;
+					quads[i % 12].color = enumColorMixingResults[oriColor][color];
+				});
+			}
+		}
+
+		let layertext = "";
+		for (let i = 0; i < quads.length; i++) {
+			const {subShape, color} = quads[i];
+			layertext += subShape + enumColorToShortcode[color];
+			if (subShape === '2') i++;
+		}
+		if (layertext[layertext.length - 2] === '2' && getRandomInt(2) === 1) {
 			layertext = "--" + layertext;
 		}
 		code = code + layertext + ":";
 	}
-	code = code.replace(/:+$/, "");
+	code = code.replace(/:+$/, "");  // remove tail ':'
 	document.getElementById("code").value = code;
 	generate();
 };
 
-function generateRandomColorSet(rng) {
-    const allPositions = [];
-
-    for (let i = 0; i < 4; i++) {
-        const positions = [
-            [
-                [0, 1],
-                [2, 3],
-            ],
-            [
-                [1, 2],
-                [0, 3],
-            ],
-            [
-                [0, 2],
-                [1, 3],
-            ],
-        ];
-
-        const chance = rng.next();
-
-        if (chance > 0.8) {
-            positions.push([[0, 1, 2, 3]]);
-        }
-
-        allPositions.push(rng.choice(positions));
-    }
-
-    return allPositions;
-}
-
-function getShapeId(layers) {
-	let id = "";
-	for (let layerIndex = 0; layerIndex < layers.length; ++layerIndex) {
-		const layer = layers[layerIndex];
-
-		let anyContents = false;
-		for (let quadrant = 0; quadrant < layer.length; ++quadrant) {
-			const item = layer[quadrant];
-
-			if (item) {
-				if (item.linkedBefore) {  // New logic. (undefined\false or true)
-					if (!anyContents) {
-						id += "--";
-					}
-				} else {
-					id += enumSubShapeToShortcode[item.subShape] + enumColorToShortcode[item.color];
-					anyContents = true;
-				}
-			} else {
-				id += "--";
-			}
-		}
-
-		if (layerIndex < layers.length - 1) {
-			id += ":";
-		}
+function shuffle(arr) {
+	for (let i = 1; i < arr.length; i++) {
+		const random = getRandomInt(i + 1);
+		[arr[i], arr[random]] = [arr[random], arr[i]];
 	}
-	return id;
+	return arr;
 }
