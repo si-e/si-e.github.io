@@ -576,12 +576,12 @@ function longestRepeatedSubstring(str) {
 }
 
 function findFeature(subShapes, acceptRandom = false) {
-	const s = subShapes.map(i => i.repeat(i)).join('');
+	let s = subShapes.replaceAll('_', '2');
 
 	const [S, S_i] = longestPalindrome(s + s.slice(0, 6));
 	const halfS = S.length / 2;
-	// const symmetricW = S.length * S.length;
 	const symmetricW = halfS * halfS;
+	// const symmetricW = S.length * S.length;
 	const [R, R_i, R_r] = longestRepeatedSubstring(s + s.slice(0, 3));
 	const repeatedW = R.length * R.length;
 	const randomizedW = acceptRandom ? 9 : 0;
@@ -616,66 +616,96 @@ function findFeature(subShapes, acceptRandom = false) {
 		Array(12).fill(0).forEach(
 			(_, index) => group[getRandomInt(partNum)].push(index)
 		);
-		logger.log("randomized", group);
+		logger.log("randomized", partNum);
 		return [group];
 	}
 }
 
+
+const SHAPE_ALL_KIND = [
+	'111111111111', '11111111112_', '111111112_2_', '11111112_12_', 
+	'1111112_112_', '1111112_2_2_', '111112_1112_', '111112_12_2_', 
+	'111112_2_12_', '11112_11112_', '11112_112_2_', '11112_12_12_', 
+	'11112_2_112_', '11112_2_2_2_', '1112_1112_2_', '1112_112_12_', 
+	'1112_12_112_', '1112_12_2_2_', '1112_2_12_2_', '1112_2_2_12_', 
+	'112_112_112_', '112_112_2_2_', '112_12_12_2_', '112_12_2_12_', 
+	'112_2_112_2_', '112_2_12_12_', '112_2_2_2_2_', '12_12_12_12_', 
+	'12_12_2_2_2_', '12_2_12_2_2_', '2_2_2_2_2_2_'
+]
+
+const COLOR_SET = [
+	c.uncolored, c.uncolored, c.white,
+	c.red, c.green, c.blue,
+	c.purple, c.cyan, c.yellow
+];
 
 window.computeFreeplayShape = (level = 100) => {
 	// let layers = getRandomInt(maxLayer);
 	let layers = 1;
 	let code = "";
 	for (var layerIndex = 0; layerIndex < layers; layerIndex++) {
-		const quads = Array(12).fill(null);
+		let quads = Array(12).fill(null);
 
+		let subShapeStr = choice(SHAPE_ALL_KIND);
+		// rotation
+		const rot = getRandomInt(12);
+		subShapeStr = subShapeStr.slice(rot).concat(subShapeStr.slice(0, rot))
+	
 		// subShape
-		const num2 = getRandomInt(7); // [0, 6]
-		const subShapes = shuffle(Array(num2).fill('2').concat(Array(12 - 2 * num2).fill('1')));
 		let angle = 0;
-		for (let subShape of subShapes) {
+		for (let subShape of subShapeStr) {
 			if (subShape == '1') {
-				quads[angle++] = { subShape: '1', color: c.uncolored};
+				quads[angle++] = { subShape, color: c.uncolored, linkedBefore: false};
+			} else if (subShape == '2') {
+				quads[angle++] = { subShape, color: c.uncolored, linkedBefore: false};
 			} else {
-				quads[angle++] = { subShape: '2', color: c.uncolored};
-				quads[angle++] = { subShape: '2', color: c.uncolored};
+				quads[angle++] = { subShape, color: c.uncolored, linkedBefore: true};
 			}
 		}
 
 		// color
-		let groups = findFeature(subShapes, level > 50);
+		let groups = findFeature(subShapeStr, level > 50);
 		if (true || level <= 50) {
 			groups = [choice(groups)];  // simple color group
+			// logger.log("group", groups[0]);
 		}
-		const colorSet = [
-			c.uncolored, c.uncolored, c.uncolored,
-			c.red, c.green, c.blue,
-			c.purple, c.cyan, c.yellow
-		];
-		const colorWheel = shuffle(colorSet).slice(0, 4);  // most 4 colors in one layer
-		var color = choice(colorWheel);
+		const colorWheel = shuffle(COLOR_SET).slice(0, 4);  // most 4 colors in one layer
+		var color = choice(colorWheel); // init color
 		for (let group of groups) {
+			// diff color for diff part
 			for (let part of group) {
+				// change color by 50% chance
 				if (getRandomInt(2) == 0) {
 					color = choice(colorWheel);
 				}
+				logger.log("part:", color, part);
 				part.forEach(i => {
+					if (quads[i % 12].linkedBefore) {
+						i += 11;
+					}
 					const oriColor = quads[i % 12].color;
 					quads[i % 12].color = enumColorMixingResults[oriColor][color];
 				});
 			}
 		}
 
+
+		// convert to text
 		let layertext = "";
+		if (quads[0].linkedBefore)
+			layertext = "--"
 		for (let i = 0; i < quads.length; i++) {
-			const {subShape, color} = quads[i];
+			const {subShape, color, linkedBefore} = quads[i];
+			if (linkedBefore)
+				continue;
 			layertext += subShape + enumColorToShortcode[color];
-			if (subShape === '2') i++;
 		}
-		if (layertext[layertext.length - 2] === '2' && getRandomInt(2) === 1) {
-			layertext = "--" + layertext;
+
+		if (layertext == "--2r2r2r2r2r2r" || layerIndex == "1b1b1b1b1b1b1b1b1b1b2b") {
+			layerIndex--;
+			continue;
 		}
-		code = code + layertext + ":";
+		code += layertext + ":";
 	}
 	code = code.replace(/:+$/, "");  // remove tail ':'
 	document.getElementById("code").value = code;
