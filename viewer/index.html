@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>
-      shapez industries shape viewer
+      异形工业-图形查看器
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="index.css" media="all" />
@@ -20,174 +20,173 @@
     />
   </head>
   <body>
-    <h1>Shapez Industries Shape generator</h1>
+    <h1>异形工业-图形查看器</h1>
     <div class="grid">
       <div class="col">
         <input
           value="CuCuCuCu"
           id="code"
-          placeholder="shape code"
+          placeholder="图形短代码"
           onkeypress="debounce(generate)"
           onkeydown="debounce(generate)"
           onkeyup="debounce(generate)"
           onchange="debounce(generate)"
         />
-        <div id="error">Error</div>
+        <div id="error">错误</div>
         <br />
 
         <div id="resultWrapper">
           <canvas id="result" width="384" height="384"></canvas>
         </div>
-        <button onclick="exportShape()">Export</button>
-        <button onclick="shareShape()">Share</button>
-        <button onclick="computeFreeplayShape()">Freeplay_Shape</button>
+        <button onclick="exportShape()">导出图片</button>
+        <button onclick="shareShape()">分享链接</button>
+        <button onclick="computeFreeplayShape()">自由关卡</button>
       </div>
       <div class="col infoBox">
-        <h2>About</h2>
+        <h2>介绍</h2>
 
         <p>
-          With this tool you can generate any shape from shapez industries! This
-          can be useful to analyze shapes or draft new ones.
+          使用这个工具，你可以从异形工业生成任何图形！
+          这对于分析图形或草拟新图形非常有用。
         </p>
 
-        <h3>Instructions</h3>
+        <h3>说明</h3>
 
         <p>
-          Shapes can be generated with a <strong>short key</strong>.
-          Each shape consists of up to 4 layers, and each layers consists of 4
-          quadrants. Shape codes start from the upper right quadrant and move clockwise.
+          1. 图形可以通过 <strong>短代码</strong> 生成。
+          每个图形由至多4层组成，每层包含4个象限。
+          图形代码从右上角象限开始，按顺时针方向移动。
         </p>
         <br />
         <p>
-          Each quadrant is described via a pair of letters - An
-          <strong>uppercase character describing the shape</strong>, followed
-          by a <strong>lowercase letter describing its color</strong>. If the
-          quadrant is empty, <code>--</code> is used
+          2. 每个象限通过一对字母描述：
+          一个 <strong>大写字母表示形状</strong> ，
+          接着另一个 <strong>小写字母表示颜色</strong> 。
+          如果象限为空，则使用 短横线<code>--</code> 表示。
         </p>
         <br />
         <p>
-          If a quadrant is <strong>linked</strong> to a quadrant before it, the color code is replaced with <code>_</code> . <br>
-           Optionally, if the shape is the same as the quadrant it is linked to, you can also replace the shape code with <code>_</code>
+          3. 如果一个象限 <strong>链接</strong> 到前一个象限，其颜色代码将被替换为 下划线 <code>_</code> 。<br>
+          可选的，如果形状与其链接的前一个象限相同，你也可以将形状代码替换为 下划线 <code>_</code> 。
         </p>
         <br />
         <p>
-          Layers are separated via <code>:</code>, starting with the
-          lowest layer.
+          4. 层之间通过 英文冒号 <code>:</code> 分隔开，从最低层开始。
         </p>
 
         <div class="grid shapeCodes">
           <div class="col">
-            <h3>Shape codes</h3>
+            <h3>形状代码</h3>
             <table>
               <tr>
-                <td><code>C</code></td><td>Circle</td>
-                <td><code>R</code></td><td>Rectangle</td>
+                <td><code>C</code></td><td>圆形</td>
+                <td><code>R</code></td><td>方形</td>
               </tr>
               <tr>
-                <td><code>S</code></td><td>Star</td>
-                <td><code>W</code></td><td>Windmill</td>
+                <td><code>S</code></td><td>星形</td>
+                <td><code>W</code></td><td>风车</td>
               </tr>
               <tr><td><br></td></tr>
-              <tr><td><code>1</code></td><td>Circle</td><td>&nbsp;+</td><td>Star</td></tr>
-              <tr><td><code>2</code></td><td>Rectangle</td><td>&nbsp;+</td><td>Circle</td></tr>
-              <tr><td><code>3</code></td><td>Star</td><td>&nbsp;+</td><td>Rectangle</td></tr>
-              <tr><td><code>4</code></td><td>Circle</td><td>&nbsp;+</td><td>Windmill</td></tr>
-              <tr><td><code>5</code></td><td>Rectangle</td><td>&nbsp;+</td><td>Windmill</td></tr>
-              <tr><td><code>6</code></td><td>Star</td><td>&nbsp;+</td><td>Windmill</td></tr>
+              <tr><td><code>1</code></td><td>图形</td><td>&nbsp;+</td><td>星形</td></tr>
+              <tr><td><code>2</code></td><td>方形</td><td>&nbsp;+</td><td>图形</td></tr>
+              <tr><td><code>3</code></td><td>星形</td><td>&nbsp;+</td><td>方形</td></tr>
+              <tr><td><code>4</code></td><td>图形</td><td>&nbsp;+</td><td>风车</td></tr>
+              <tr><td><code>5</code></td><td>方形</td><td>&nbsp;+</td><td>风车</td></tr>
+              <tr><td><code>6</code></td><td>星形</td><td>&nbsp;+</td><td>风车</td></tr>
             </table>
           </div>
           <div class="col">
-            <h3>Color codes</h3>
+            <h3>颜色代码</h3>
             <table>
               <tr>
                 <td><code>r</code></td>
                 <td><span class="colorPreview" style="background: #ff666a;"></span></td>
-                <td>Red</td>
+                <td>红</td>
                 <td>&nbsp;</td>
                 <td><code>o</code></td>
                 <td><span class="colorPreview" style="background: #fdad4a;"></span></td>
-                <td>Orange</td>
+                <td>橙</td>
               </tr>
               <tr>
                 <td><code>g</code></td>
                 <td><span class="colorPreview" style="background: #78ff66;"></span></td>
-                <td>Green</td>
+                <td>绿</td>
                 <td>&nbsp;</td>
                 <td><code>l</code></td>
                 <td><span class="colorPreview" style="background: #bafa48;"></span></td>
-                <td>Light Green</td>
+                <td>浅绿</td>
               </tr>
               <tr>
                 <td><code>b</code></td>
                 <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
-                <td>Blue</td>
+                <td>蓝</td>
                 <td>&nbsp;</td>
                 <td><code>m</code></td>
                 <td><span class="colorPreview" style="background: #3cfdb2;"></span></td>
-                <td>Mint</td>
+                <td>薄荷</td>
               </tr>
 
               <tr>
                 <td><code>y</code></td>
                 <td><span class="colorPreview" style="background: #fcf52a;"></span></td>
-                <td>Yellow</td>
+                <td>黄</td>
                 <td>&nbsp;</td>
                 <td><code>h</code></td>
                 <td><span class="colorPreview" style="background: #33d1ff;"></span></td>
-                <td>Light Blue</td>
+                <td>浅蓝</td>
               </tr>
 
               <tr>
                 <td><code>p</code></td>
                 <td><span class="colorPreview" style="background: #dd66ff;"></span></td>
-                <td>Purple</td>
+                <td>紫</td>
                 <td>&nbsp;</td>
                 <td><code>z</code></td>
                 <td><span class="colorPreview" style="background: #a186ff;"></span></td>
-                <td>Dark Purple</td>
+                <td>深紫</td>
               </tr>
 
               <tr>
                 <td><code>c</code></td>
                 <td><span class="colorPreview" style="background: #00fcff;"></span></td>
-                <td>Cyan</td>
+                <td>青</td>
                 <td>&nbsp;</td>
                 <td><code>i</code></td>
                 <td><span class="colorPreview" style="background: #ee66b4;"></span></td>
-                <td>Pink</td>
+                <td>粉</td>
               </tr>
 
               <tr>
                 <td><code>u</code></td>
                 <td><span class="colorPreview" style="background: #aaaaaa;"></span></td>
-                <td>Uncolored</td>
+                <td>无色</td>
                 <td>&nbsp;</td>
                 <td><code>k</code></td>
                 <td><span class="colorPreview" style="background: #202020;"></span></td>
-                <td>Black</td>
+                <td>黑</td>
               </tr>
 
               <tr>
                 <td><code>w</code></td>
                 <td><span class="colorPreview" style="background: #ffffff;"></span></td>
-                <td>White</td>
+                <td>白</td>
                 <td>&nbsp;</td>
                 <td><code>s</code></td>
                 <td><span class="colorPreview" style="background: rgba(0, 0, 0, 0);"></span></td>
-                <td>Ghost</td>
+                <td>透明</td>
               </tr>
             </table>
           </div>
         </div>
 
-        <h3>Examples</h3>
+        <h3>样例</h3>
 
         <script>
           const examples = [
-            ["Cw______", "White linked circle"],
-            ["----SuSu", "Half star"],
-            ["RpRpRpRp:CwCwCwCw", "Layering example"],
-            ["Sb----Sb:CbCbCbCb:--CwCw--", "Bugprint Shape"],
+            ["Cw______", "全链接白圆"],
+            ["----SuSu", "半星"],
+            ["RpRpRpRp:CwCwCwCw", "双层图形"],
+            ["Sb----Sb:CbCbCbCb:--CwCw--", "虫印"],
           ];
           for (let i = 0; i < examples.length; ++i) {
             const [key, desc] = examples[i];
@@ -200,8 +199,8 @@
           }
         </script>
 		<div class="example">
-            <code></code><label>Random Shape</label>
-            <button onclick="randomShape()">Randomize</button>
+            <code></code><label>随机图形</label>
+            <button onclick="randomShape()">随机</button>
           </div>
       </div>
     </div>
