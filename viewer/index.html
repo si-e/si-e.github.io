@@ -67,7 +67,7 @@
         <br />
         <p>
           3. 如果一个象限 <strong>链接</strong> 到前一个象限，其颜色代码将被替换为 下划线 <code>_</code> 。<br>
-          可选的，如果形状与其链接的前一个象限相同，你也可以将形状代码替换为 下划线 <code>_</code> 。
+          可选的，如果形状与其链接的前一个象限相同，也可将形状代码替换为 下划线 <code>_</code> 。
         </p>
         <br />
         <p>
@@ -80,19 +80,21 @@
             <table>
               <tr>
                 <td><code>C</code></td><td>圆形</td>
+                <td></td>
                 <td><code>R</code></td><td>方形</td>
               </tr>
               <tr>
                 <td><code>S</code></td><td>星形</td>
+                <td></td>
                 <td><code>W</code></td><td>风车</td>
               </tr>
               <tr><td><br></td></tr>
-              <tr><td><code>1</code></td><td>图形</td><td>&nbsp;+</td><td>星形</td></tr>
-              <tr><td><code>2</code></td><td>方形</td><td>&nbsp;+</td><td>图形</td></tr>
-              <tr><td><code>3</code></td><td>星形</td><td>&nbsp;+</td><td>方形</td></tr>
-              <tr><td><code>4</code></td><td>图形</td><td>&nbsp;+</td><td>风车</td></tr>
-              <tr><td><code>5</code></td><td>方形</td><td>&nbsp;+</td><td>风车</td></tr>
-              <tr><td><code>6</code></td><td>星形</td><td>&nbsp;+</td><td>风车</td></tr>
+              <tr><td><code>1</code></td><td>&nbsp;=</td><td>图形</td><td>&nbsp;+</td><td>星形</td></tr>
+              <tr><td><code>2</code></td><td>&nbsp;=</td><td>方形</td><td>&nbsp;+</td><td>图形</td></tr>
+              <tr><td><code>3</code></td><td>&nbsp;=</td><td>星形</td><td>&nbsp;+</td><td>方形</td></tr>
+              <tr><td><code>4</code></td><td>&nbsp;=</td><td>图形</td><td>&nbsp;+</td><td>风车</td></tr>
+              <tr><td><code>5</code></td><td>&nbsp;=</td><td>方形</td><td>&nbsp;+</td><td>风车</td></tr>
+              <tr><td><code>6</code></td><td>&nbsp;=</td><td>星形</td><td>&nbsp;+</td><td>风车</td></tr>
             </table>
           </div>
           <div class="col">
@@ -100,80 +102,198 @@
             <table>
               <tr>
                 <td><code>r</code></td>
-                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td><span class="colorPreview2" style="background: #ff666a;"></span></td>
                 <td>红</td>
                 <td>&nbsp;</td>
-                <td><code>o</code></td>
-                <td><span class="colorPreview" style="background: #fdad4a;"></span></td>
-                <td>橙</td>
-              </tr>
-              <tr>
                 <td><code>g</code></td>
-                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td><span class="colorPreview2" style="background: #78ff66;"></span></td>
                 <td>绿</td>
                 <td>&nbsp;</td>
-                <td><code>l</code></td>
-                <td><span class="colorPreview" style="background: #bafa48;"></span></td>
-                <td>浅绿</td>
-              </tr>
-              <tr>
                 <td><code>b</code></td>
-                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td><span class="colorPreview2" style="background: #66a7ff;"></span></td>
                 <td>蓝</td>
+              </tr>
+
+              <tr>
                 <td>&nbsp;</td>
-                <td><code>m</code></td>
-                <td><span class="colorPreview" style="background: #3cfdb2;"></span></td>
-                <td>薄荷</td>
               </tr>
 
               <tr>
                 <td><code>y</code></td>
-                <td><span class="colorPreview" style="background: #fcf52a;"></span></td>
+                <td><span class="colorPreview2" style="background: #fcf52a;"></span></td>
                 <td>黄</td>
-                <td>&nbsp;</td>
-                <td><code>h</code></td>
-                <td><span class="colorPreview" style="background: #33d1ff;"></span></td>
-                <td>浅蓝</td>
-              </tr>
-
-              <tr>
-                <td><code>p</code></td>
-                <td><span class="colorPreview" style="background: #dd66ff;"></span></td>
-                <td>紫</td>
-                <td>&nbsp;</td>
-                <td><code>z</code></td>
-                <td><span class="colorPreview" style="background: #a186ff;"></span></td>
-                <td>深紫</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>&nbsp;)</td>
               </tr>
 
               <tr>
                 <td><code>c</code></td>
-                <td><span class="colorPreview" style="background: #00fcff;"></span></td>
+                <td><span class="colorPreview2" style="background: #00fcff;"></span></td>
                 <td>青</td>
-                <td>&nbsp;</td>
-                <td><code>i</code></td>
-                <td><span class="colorPreview" style="background: #ee66b4;"></span></td>
-                <td>粉</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
               </tr>
 
               <tr>
-                <td><code>u</code></td>
-                <td><span class="colorPreview" style="background: #aaaaaa;"></span></td>
-                <td>无色</td>
-                <td>&nbsp;</td>
-                <td><code>k</code></td>
-                <td><span class="colorPreview" style="background: #202020;"></span></td>
-                <td>黑</td>
+                <td><code>p</code></td>
+                <td><span class="colorPreview2" style="background: #dd66ff;"></span></td>
+                <td>紫</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
               </tr>
 
               <tr>
                 <td><code>w</code></td>
-                <td><span class="colorPreview" style="background: #ffffff;"></span></td>
+                <td><span class="colorPreview2" style="background: #ffffff;"></span></td>
                 <td>白</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>u</code></td>
+                <td><span class="colorPreview2" style="background: #aaaaaa;"></span></td>
+                <td>无色</td>
+              </tr>
+
+              <tr>
                 <td>&nbsp;</td>
+              </tr>
+
+              <tr>
+                <td><code>o</code></td>
+                <td><span class="colorPreview2" style="background: #fdad4a;"></span></td>
+                <td>橙黄</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>l</code></td>
+                <td><span class="colorPreview2" style="background: #bafa48;"></span></td>
+                <td>浅绿</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>m</code></td>
+                <td><span class="colorPreview2" style="background: #3cfdb2;"></span></td>
+                <td>薄荷</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>h</code></td>
+                <td><span class="colorPreview2" style="background: #33d1ff;"></span></td>
+                <td>浅蓝</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #78ff66;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>z</code></td>
+                <td><span class="colorPreview2" style="background: #a186ff;"></span></td>
+                <td>深紫</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td><code>i</code></td>
+                <td><span class="colorPreview2" style="background: #ee66b4;"></span></td>
+                <td>粉红</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;(&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #66a7ff;"></span></td>
+                <td>&nbsp;)</td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #ff666a;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
+                <td>&nbsp;</td>
+              </tr>
+
+              <tr>
+                <td><code>k</code></td>
+                <td><span class="colorPreview2" style="background: #202020;"></span></td>
+                <td>黑色</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #aaaaaa;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #aaaaaa;"></span></td>
+                <td>&nbsp;)</td>
+              </tr>
+
+              <tr>
                 <td><code>s</code></td>
-                <td><span class="colorPreview" style="background: rgba(0, 0, 0, 0);"></span></td>
+                <td><span class="colorPreview2" style="background: rgba(0, 0, 0, 0);"></span></td>
                 <td>透明</td>
+                <td>&nbsp;=</td>
+                <td>&nbsp;&nbsp;(</td>
+                <td><span class="colorPreview" style="background: #ffffff;"></span></td>
+                <td>+</td>
+                <td><span class="colorPreview" style="background: #202020;"></span></td>
+                <td>&nbsp;)</td>
               </tr>
             </table>
           </div>

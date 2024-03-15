@@ -142,6 +142,16 @@ button:hover {
     margin-right: 10px;
 }
 
+.colorPreview2 {
+    border-radius: 50px;
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    border: 1px solid #333538;
+    margin-left: 3px;
+    margin-right: 10px;
+}
+
 .example {
     display: grid;
     grid-template-columns: 1fr auto auto;
