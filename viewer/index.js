@@ -156,19 +156,19 @@ function radians(degrees) {
 function fromShortKey(key) {
 	const sourceLayers = key.split(":");
 	if (sourceLayers.length > maxLayer) {
-		throw new Error("Only " + maxLayer + " layers allowed");
+		throw new Error("至多允许" + maxLayer + "层");
 	}
 	let layers = [];
 	for (let i = 0; i < sourceLayers.length; ++i) {
 		const text = sourceLayers[i];
 		if (text.length !== 8) {
 			throw new Error(
-				"Invalid layer: '" + text + "' -> must be 8 characters"
+				"无效层：‘" + text + "’ -> 必须为8个字母"
 			);
 		}
 
 		if (text === "--".repeat(4)) {
-			throw new Error("Empty layers are not allowed");
+			throw new Error("不允许全空层：" + text);
 		}
 
 		/** @type {ShapeLayer} */
@@ -184,7 +184,7 @@ function fromShortKey(key) {
 			if (shapeText == "-") {
 				// it's nothing
 				if (colorText != "-") {
-					throw new Error("Shape is null but not color");
+					throw new Error("不允许图形为空但存在颜色：" + shapeText + colorText);
 				}
 				items.push(null);
 				continue;
@@ -203,14 +203,14 @@ function fromShortKey(key) {
 				linkedShapes++;
 			} else if (subShape) {
 				if (!color) {
-					throw new Error("Invalid color");
+					throw new Error("无效颜色：" + colorText);
 				}
 				items.push({
 					subShape,
 					color,
 				});
 			} else {
-				throw new Error("Invalid shape key: " + shapeText);
+				throw new Error("无效形状：" + shapeText);
 			}
 		}
 
@@ -231,7 +231,7 @@ function fromShortKey(key) {
 			if (item && item.linkedBefore) {
 				if (!lastItem || !lastFullItem) {
 					throw new Error(
-						"Item is linked but there is nothing before"
+						"前方无可链接：" + text
 					);
 				}
 				lastItem.linkedAfter = true;
@@ -430,7 +430,7 @@ function drawOuterSubShape(context, dims, subShape) {
 		}
 
 		default: {
-			throw new Error("Unkown sub shape: " + subShape);
+			throw new Error("无效形状：" + subShape);
 		}
 	}
 }
@@ -443,7 +443,7 @@ function showError(msg) {
 	if (msg) {
 		errorDiv.innerText = msg;
 	} else {
-		errorDiv.innerText = "Shape generated";
+		errorDiv.innerText = "图形已生成";
 	}
 }
 
@@ -510,7 +510,7 @@ window.shareShape = () => {
 	const code = document.getElementById("code").value.trim();
 	const url = "https://si-e.github.io/viewer?" + code;
 	navigator.clipboard.writeText(url);
-	alert("You can paste this url: \n" + url);
+	alert("现在你可以粘贴这个网址：\n" + url);
 };
 
 function getRandomInt(max) {
