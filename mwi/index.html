@@ -1320,7 +1320,7 @@ function saveToBin(data) {
         if (resp.ok) {
           const json = await resp.json();
           if (json.record && json.record.d) {
-            const dec = await decryptData(json.record.d, state.encKey);
+            const dec = await decryptRecord(json.record, state.encKey);
             const remote = JSON.parse(dec);
             merged = mergeState(localData, remote);
           }
@@ -1328,12 +1328,12 @@ function saveToBin(data) {
       } catch(e) { console.warn('Merge fetch failed, saving without merge:', e); }
       // Encrypt and PUT merged data
       const dataToSave = JSON.stringify(merged);
-      const enc = await encryptData(dataToSave, state.encKey);
+      const rec = await encryptRecord(dataToSave, state.encKey);
       const pHeaders = {'Content-Type':'application/json'};
       if (mk) pHeaders['X-Master-Key'] = mk;
       await fetch(BIN_BASE+'/'+state.binId, {
         method:'PUT', headers:pHeaders,
-        body: JSON.stringify({d:enc})
+        body: JSON.stringify(rec)
       });
       // Sync merged result back to local state (picks up others' changes)
       state.members = merged.members;
@@ -1376,7 +1376,7 @@ async function loadFromBin() {
     }
     const json = await resp.json();
     if (json.record && json.record.d) {
-      const dec = await decryptData(json.record.d, state.encKey);
+      const dec = await decryptRecord(json.record, state.encKey);
       const data = JSON.parse(dec);
       Object.assign(state, data);
       return true;
@@ -1387,14 +1387,34 @@ async function loadFromBin() {
 async function createBin(guild, password, masterKey) {
   const encKey = await deriveKey(password, guild);
   const data = JSON.stringify({ guild, members: state.members, trials: state.trials });
-  const enc = await encryptData(data, encKey);
+  const rec = await encryptRecord(data, encKey);
   const resp = await fetch(BIN_BASE, {
     method:'POST',
     headers:{'Content-Type':'application/json','X-Master-Key':masterKey,'X-Bin-Name':'MWI_'+guild,'X-Bin-Private':'false'},
-    body: JSON.stringify({d:enc})
+    body: JSON.stringify(rec)
   });
   const json = await resp.json();
+  if (!resp.ok) throw new Error('jsonbin '+resp.status+': '+(json && json.message ? json.message : resp.statusText));
   return json.metadata ? json.metadata.id : null;
+}
+
+// === Compression (gzip) ===
+// Returns gzipped bytes, or the input unchanged if CompressionStream is unavailable (older browsers).
+async function gzipBytes(bytes) {
+  if (typeof CompressionStream === 'undefined') return bytes;
+  const cs = new CompressionStream('gzip');
+  const writer = cs.writable.getWriter();
+  writer.write(bytes); writer.close();
+  const ab = await new Response(cs.readable).arrayBuffer();
+  return new Uint8Array(ab);
+}
+async function gunzipBytes(bytes) {
+  if (typeof DecompressionStream === 'undefined') return bytes;
+  const ds = new DecompressionStream('gzip');
+  const writer = ds.writable.getWriter();
+  writer.write(bytes); writer.close();
+  const ab = await new Response(ds.readable).arrayBuffer();
+  return new Uint8Array(ab);
 }
 
 // === Crypto ===
@@ -1403,19 +1423,45 @@ async function deriveKey(password, salt) {
   const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt:enc.encode(salt),iterations:100000,hash:'SHA-256'}, keyMaterial, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
 }
-async function encryptData(text, key) {
+// Chunked base64 to avoid call-stack overflow on large payloads
+function bytesToBase64(bytes) {
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function encryptBytes(bytes, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const enc = new TextEncoder();
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, enc.encode(text));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, bytes);
   const combined = new Uint8Array(iv.length + ct.byteLength);
   combined.set(iv); combined.set(new Uint8Array(ct), iv.length);
-  return btoa(String.fromCharCode(...combined));
+  return bytesToBase64(combined);
 }
-async function decryptData(b64, key) {
-  const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+async function decryptBytes(b64, key) {
+  const combined = base64ToBytes(b64);
   const iv = combined.slice(0, 12); const ct = combined.slice(12);
-  const dec = new TextDecoder();
-  return dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv}, key, ct));
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv}, key, ct));
+}
+// gzip + encrypt. Always compressed. Returns { d }.
+async function encryptRecord(text, key) {
+  const bytes = new TextEncoder().encode(text);
+  const gz = await gzipBytes(bytes);
+  const d = await encryptBytes(gz, key);
+  return { d };
+}
+// Decrypt + gunzip. Returns the original JSON string.
+async function decryptRecord(rec, key) {
+  const bytes = await decryptBytes(rec.d, key);
+  const gz = await gunzipBytes(bytes);
+  return new TextDecoder().decode(gz);
 }
 
 // === Share Dialog ===
@@ -1445,8 +1491,8 @@ function getShareUrl() {
   url.searchParams.set('guild', state.guild);
   url.searchParams.set('bin', state.binId);
   if (state.pwd) url.searchParams.set('pwd', state.pwd);
-  const mk = localStorage.getItem('mwi_master_key');
-  if (mk) url.searchParams.set('mk', mk);
+  // const mk = localStorage.getItem('mwi_master_key');
+  // if (mk) url.searchParams.set('mk', mk);
   return url.toString();
 }
 function copyShareUrl() {
