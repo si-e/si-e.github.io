@@ -603,6 +603,7 @@ table.member-table td.assign-cell svg { width:22px; height:22px; }
   <div class="header-right">
     <button class="btn btn-icon" id="btn-lang" onclick="toggleLang()">中/EN</button>
     <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()">🌙</button>
+    <button class="btn" id="btn-refresh" onclick="refreshFromServer()" style="display:none">🔄</button>
     <button class="btn" id="btn-share" onclick="openShareDialog()">共享设置</button>
     <button class="btn" id="btn-import" onclick="importCsv()">导入CSV</button>
     <button class="btn" id="btn-export" onclick="exportCsv()">导出CSV</button>
@@ -1068,6 +1069,7 @@ function closeSkillPickerOnOutside(e) {
 }
 function selectTrialSkill(trialIdx, skillIdx) {
   state.trials[trialIdx].skill = skillIdx;
+  state.trials[trialIdx]._ts = Date.now();
   closeSkillPicker();
   renderTrialCards();
   saveData();
@@ -1149,13 +1151,14 @@ function confirmEquip() {
   if (!person) return;
   if (!person.equipment) person.equipment = {};
   person.equipment[pickerState.slot] = { iconId: pickerState.iconId, enhance: pickerState.enhance };
+  person._ts = Date.now();
   closeEquipPicker();
   renderMemberTable();
   saveData();
 }
 function clearEquip() {
   const person = state.members.find(p => p.id === pickerState.memberId);
-  if (person && person.equipment) delete person.equipment[pickerState.slot];
+  if (person && person.equipment) { delete person.equipment[pickerState.slot]; person._ts = Date.now(); }
   closeEquipPicker();
   renderMemberTable();
   saveData();
@@ -1164,7 +1167,7 @@ function clearEquip() {
 // === Member Management ===
 function addMember() {
   const id = state.members.length > 0 ? Math.max(...state.members.map(p=>p.id)) + 1 : 0;
-  state.members.push({ id, name: t('addMember'), levels: [0,0,0,0,0,0,0,0,0,0], equipment: {} });
+  state.members.push({ id, name: t('addMember'), levels: [0,0,0,0,0,0,0,0,0,0], equipment: {}, _ts: Date.now() });
   renderMemberTable();
   renderSummary();
   saveData();
@@ -1177,14 +1180,15 @@ function removeMember(id) {
 }
 function updateMemberName(id, value) {
   const p = state.members.find(p => p.id === id);
-  if (p) { p.name = value; saveData(); }
+  if (p) { p.name = value; p._ts = Date.now(); saveData(); }
 }
 function updateSkillLevel(id, skillIdx, value) {
   const p = state.members.find(p => p.id === id);
-  if (p) { p.levels[skillIdx] = Math.max(0, parseInt(value)||0); saveData(); }
+  if (p) { p.levels[skillIdx] = Math.max(0, parseInt(value)||0); p._ts = Date.now(); saveData(); }
 }
 function updateTrialMax(trialIdx, value) {
   state.trials[trialIdx].max = Math.max(1, parseInt(value)||20);
+  state.trials[trialIdx]._ts = Date.now();
   saveData();
 }
 
@@ -1336,17 +1340,67 @@ function loadData() {
 // === jsonbin.io ===
 const BIN_BASE = 'https://api.jsonbin.io/v3/b';
 let saveTimer = null;
+let isSaving = false;
 function saveToBin(data) {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
+    if (isSaving) { saveTimer = setTimeout(()=>saveToBin(data), 3000); return; }
+    isSaving = true;
     try {
-      const enc = await encryptData(data, state.encKey);
+      const localData = JSON.parse(data);
+      const mk = localStorage.getItem('mwi_master_key') || '';
+      // Fetch latest from bin for merge
+      let merged = localData;
+      try {
+        const rHeaders = mk ? {'X-Master-Key':mk} : {};
+        const resp = await fetch(BIN_BASE+'/'+state.binId+'/latest', { headers:rHeaders });
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json.record && json.record.d) {
+            const dec = await decryptData(json.record.d, state.encKey);
+            const remote = JSON.parse(dec);
+            merged = mergeState(localData, remote);
+          }
+        }
+      } catch(e) { console.warn('Merge fetch failed, saving without merge:', e); }
+      // Encrypt and PUT merged data
+      const dataToSave = JSON.stringify(merged);
+      const enc = await encryptData(dataToSave, state.encKey);
+      const pHeaders = {'Content-Type':'application/json'};
+      if (mk) pHeaders['X-Master-Key'] = mk;
       await fetch(BIN_BASE+'/'+state.binId, {
-        method:'PUT', headers:{'Content-Type':'application/json','X-Master-Key':localStorage.getItem('mwi_master_key')||''},
+        method:'PUT', headers:pHeaders,
         body: JSON.stringify({d:enc})
       });
+      // Sync merged result back to local state (picks up others' changes)
+      state.members = merged.members;
+      state.trials = merged.trials;
     } catch(e) { console.error('Save failed:', e); }
+    isSaving = false;
   }, 2000);
+}
+
+function mergeState(local, remote) {
+  if (!remote || !remote.members) return local;
+  // Build remote member map
+  const rMap = {};
+  remote.members.forEach(p => { rMap[p.id] = p; });
+  // Merge: for each local member, if remote has newer _ts, take remote
+  const mergedMembers = local.members.map(p => {
+    const r = rMap[p.id];
+    if (r && r._ts && (!p._ts || r._ts > p._ts)) return r;
+    return p;
+  });
+  // Add remote members not present locally (added by others)
+  const localIds = new Set(local.members.map(p => p.id));
+  remote.members.forEach(p => { if (!localIds.has(p.id)) mergedMembers.push(p); });
+  // Merge trials by _ts
+  const mergedTrials = local.trials.map((trial, i) => {
+    const r = remote.trials && remote.trials[i];
+    if (r && r._ts && (!trial._ts || r._ts > trial._ts)) return r;
+    return trial;
+  });
+  return { guild: local.guild || remote.guild, members: mergedMembers, trials: mergedTrials };
 }
 async function loadFromBin() {
   try {
@@ -1456,8 +1510,24 @@ async function createShare() {
 }
 function updateConnectionStatus() {
   const el = document.getElementById('conn-status');
-  if (state.isShared) el.textContent = t('connected')+': '+state.guild;
-  else el.textContent = t('offlineMode');
+  const refreshBtn = document.getElementById('btn-refresh');
+  if (state.isShared) {
+    el.textContent = t('connected')+': '+state.guild;
+    if (refreshBtn) refreshBtn.style.display = '';
+  } else {
+    el.textContent = t('offlineMode');
+    if (refreshBtn) refreshBtn.style.display = 'none';
+  }
+}
+
+async function refreshFromServer() {
+  if (!state.isShared || !state.binId) return;
+  clearTimeout(saveTimer);
+  const ok = await loadFromBin();
+  if (ok) {
+    renderAll();
+    if (state.members.length > 0) calculate();
+  }
 }
 
 // === Init ===
