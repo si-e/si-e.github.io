@@ -1350,7 +1350,13 @@ function saveToBin(data) {
 }
 async function loadFromBin() {
   try {
-    const resp = await fetch(BIN_BASE+'/'+state.binId+'/latest', { headers:{'X-Master-Key':localStorage.getItem('mwi_master_key')||''} });
+    const mk = localStorage.getItem('mwi_master_key') || '';
+    const headers = mk ? {'X-Master-Key':mk} : {};
+    const resp = await fetch(BIN_BASE+'/'+state.binId+'/latest', { headers });
+    if (!resp.ok) {
+      console.error('Load HTTP', resp.status);
+      return false;
+    }
     const json = await resp.json();
     if (json.record && json.record.d) {
       const dec = await decryptData(json.record.d, state.encKey);
@@ -1367,7 +1373,7 @@ async function createBin(guild, password, masterKey) {
   const enc = await encryptData(data, encKey);
   const resp = await fetch(BIN_BASE, {
     method:'POST',
-    headers:{'Content-Type':'application/json','X-Master-Key':masterKey,'X-Bin-Name':'MWI_'+guild},
+    headers:{'Content-Type':'application/json','X-Master-Key':masterKey,'X-Bin-Name':'MWI_'+guild,'X-Bin-Private':'false'},
     body: JSON.stringify({d:enc})
   });
   const json = await resp.json();
