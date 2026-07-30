@@ -742,7 +742,8 @@ let state = {
   result: null,
   binId: null,
   encKey: null,
-  isShared: false
+  isShared: false,
+  deletedIds: []
 };
 let pickerState = { memberId:null, slot:null, iconId:null, enhance:0 };
 
@@ -1187,6 +1188,7 @@ function addMember() {
 }
 function removeMember(id) {
   state.members = state.members.filter(p => p.id !== id);
+  if (!state.deletedIds.includes(id)) state.deletedIds.push(id);
   renderMemberTable();
   renderSummary();
   saveData();
@@ -1273,7 +1275,8 @@ function importJson() {
       }
       if (newMembers.length > 0) {
         state.members = newMembers;
-        const data = JSON.stringify({ guild: state.guild, members: state.members, trials: state.trials });
+        state.deletedIds = [];
+        const data = JSON.stringify({ guild: state.guild, members: state.members, trials: state.trials, deletedIds: state.deletedIds });
         try { localStorage.setItem(getStorageKey(), data); } catch(e) {}
         if (state.isShared && state.binId && state.encKey) {
           await forcePushToBin(data);   // 立即全量覆盖 bin，不走合并，防止被旧数据覆盖
@@ -1296,14 +1299,14 @@ function importJson() {
 // === Data Persistence ===
 function getStorageKey() { return 'mwi_trial_'+(state.guild||'default'); }
 function saveData() {
-  const data = JSON.stringify({ guild:state.guild, members:state.members, trials:state.trials });
+  const data = JSON.stringify({ guild:state.guild, members:state.members, trials:state.trials, deletedIds:state.deletedIds });
   try { localStorage.setItem(getStorageKey(), data); } catch(e) {}
   if (state.isShared && state.binId && state.encKey) saveToBin(data);
 }
 function loadData() {
   try {
     const raw = localStorage.getItem(getStorageKey());
-    if (raw) { Object.assign(state, JSON.parse(raw)); return true; }
+    if (raw) { Object.assign(state, JSON.parse(raw)); if (!Array.isArray(state.deletedIds)) state.deletedIds = []; return true; }
   } catch(e) {}
   return false;
 }
@@ -1348,6 +1351,7 @@ function saveToBin(data) {
       // Sync merged result back to local state (picks up others' changes)
       state.members = merged.members;
       state.trials = merged.trials;
+      state.deletedIds = merged.deletedIds || [];
     } catch(e) { console.error('Save failed:', e); }
     isSaving = false;
   }, 2000);
@@ -1364,30 +1368,34 @@ async function forcePushToBin(data) {
     const parsed = JSON.parse(data);
     state.members = parsed.members;
     state.trials = parsed.trials;
+    state.deletedIds = parsed.deletedIds || [];
   } catch(e) { console.error('Force push failed:', e); }
 }
 
 function mergeState(local, remote) {
   if (!remote || !remote.members) return local;
-  // Build remote member map
+  // 合并删除标记（墓碑），确保某端删除的成员不会在合并时被远端重新加回
+  const del = new Set([...(local.deletedIds||[]), ...(remote.deletedIds||[])]);
+  const localMembers = local.members.filter(p => !del.has(p.id));
+  // Build remote member map (排除已删除)
   const rMap = {};
-  remote.members.forEach(p => { rMap[p.id] = p; });
+  remote.members.forEach(p => { if (!del.has(p.id)) rMap[p.id] = p; });
   // Merge: for each local member, if remote has newer _ts, take remote
-  const mergedMembers = local.members.map(p => {
+  const mergedMembers = localMembers.map(p => {
     const r = rMap[p.id];
     if (r && r._ts && (!p._ts || r._ts > p._ts)) return r;
     return p;
   });
-  // Add remote members not present locally (added by others)
-  const localIds = new Set(local.members.map(p => p.id));
-  remote.members.forEach(p => { if (!localIds.has(p.id)) mergedMembers.push(p); });
+  // Add remote members not present locally (added by others)，且非已删除
+  const localIds = new Set(localMembers.map(p => p.id));
+  remote.members.forEach(p => { if (!localIds.has(p.id) && !del.has(p.id)) mergedMembers.push(p); });
   // Merge trials by _ts
   const mergedTrials = local.trials.map((trial, i) => {
     const r = remote.trials && remote.trials[i];
     if (r && r._ts && (!trial._ts || r._ts > trial._ts)) return r;
     return trial;
   });
-  return { guild: local.guild || remote.guild, members: mergedMembers, trials: mergedTrials };
+  return { guild: local.guild || remote.guild, members: mergedMembers, trials: mergedTrials, deletedIds: [...del] };
 }
 async function loadFromBin() {
   try {
@@ -1403,6 +1411,7 @@ async function loadFromBin() {
       const dec = await decryptRecord(json.record, state.encKey);
       const data = JSON.parse(dec);
       Object.assign(state, data);
+      if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
       return true;
     }
   } catch(e) { console.error('Load failed:', e); }
@@ -1410,7 +1419,7 @@ async function loadFromBin() {
 }
 async function createBin(guild, password, masterKey) {
   const encKey = await deriveKey(password, guild);
-  const data = JSON.stringify({ guild, members: state.members, trials: state.trials });
+  const data = JSON.stringify({ guild, members: state.members, trials: state.trials, deletedIds: state.deletedIds });
   const rec = await encryptRecord(data, encKey);
   const resp = await fetch(BIN_BASE, {
     method:'POST',
