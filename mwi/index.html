@@ -1254,7 +1254,7 @@ function importJson() {
   input.onchange = () => {
     const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       let membersData;
       try {
         membersData = JSON.parse(reader.result);
@@ -1268,12 +1268,21 @@ function importJson() {
         const m = parseMemberFromProfile(profile);
         if (m) {
           m.id = newMembers.length > 0 ? newMembers[newMembers.length-1].id + 1 : 0;
+          m._ts = Date.now();   // 标记为最新，避免被旧共享 bin 数据在合并时覆盖
           newMembers.push(m);
         }
       }
       if (newMembers.length > 0) {
         state.members = newMembers;
-        renderAll(); saveData();
+        const data = JSON.stringify({ guild: state.guild, members: state.members, trials: state.trials });
+        try { localStorage.setItem(getStorageKey(), data); } catch(e) {}
+        if (state.isShared && state.binId && state.encKey) {
+          await forcePushToBin(data);   // 立即全量覆盖 bin，不走合并，防止被旧数据覆盖
+        } else {
+          saveData();
+        }
+        renderAll();
+        if (state.members.length > 0) calculate();
         alert(t('importSuccess')+': '+newMembers.length);
       } else {
         alert(t('importFailed'));
@@ -1341,6 +1350,20 @@ function saveToBin(data) {
     } catch(e) { console.error('Save failed:', e); }
     isSaving = false;
   }, 2000);
+}
+// 导入等场景：立即全量覆盖 bin，不做合并，确保本地数据成为权威版本，避免被旧数据覆盖
+async function forcePushToBin(data) {
+  try {
+    clearTimeout(saveTimer);
+    const mk = localStorage.getItem('mwi_master_key') || '';
+    const rec = await encryptRecord(data, state.encKey);
+    const pHeaders = { 'Content-Type':'application/json' };
+    if (mk) pHeaders['X-Master-Key'] = mk;
+    await fetch(BIN_BASE+'/'+state.binId, { method:'PUT', headers:pHeaders, body: JSON.stringify(rec) });
+    const parsed = JSON.parse(data);
+    state.members = parsed.members;
+    state.trials = parsed.trials;
+  } catch(e) { console.error('Force push failed:', e); }
 }
 
 function mergeState(local, remote) {
