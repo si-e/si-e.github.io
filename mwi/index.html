@@ -742,7 +742,6 @@ let state = {
   result: null,
   binId: null,
   encKey: null,
-  pwd: '',
   isShared: false
 };
 let pickerState = { memberId:null, slot:null, iconId:null, enhance:0 };
@@ -1311,6 +1310,8 @@ function loadData() {
 
 // === jsonbin.io ===
 const BIN_BASE = 'https://api.jsonbin.io/v3/b';
+// 固定的分享加密密码：历史 bin 均用此密码加密，保留以保证兼容现有数据，且不写入分享 URL
+const SHARE_PASSWORD = 'layu';
 let saveTimer = null;
 let isSaving = false;
 function saveToBin(data) {
@@ -1497,7 +1498,6 @@ function openShareDialog() {
   overlay.innerHTML = '<div class="modal-dialog" style="max-width:440px">'+
     '<div class="modal-title"><span>'+t('share')+'</span><button class="modal-close" onclick="closeShareDialog()">&times;</button></div>'+
     '<div class="share-field"><label>'+t('guildName')+'</label><input type="text" id="share-guild" value="'+escHtml(state.guild)+'" placeholder="MWI"></div>'+
-    '<div class="share-field"><label>'+t('password')+'</label><input type="text" id="share-password" placeholder="***"></div>'+
     '<div class="share-field"><label>'+t('masterKey')+'</label><input type="text" id="share-masterkey" value="'+escHtml(storedKey)+'" placeholder="jsonbin.io"></div>'+
     '<div style="font-size:11px;color:var(--text-muted);margin:8px 0">'+t('shareHint')+'</div>'+
     (state.binId ? '<div class="share-field"><label>'+t('currentUrl')+'</label><div class="share-url" onclick="copyShareUrl()">'+escHtml(getShareUrl())+'</div></div>' : '')+
@@ -1513,8 +1513,7 @@ function getShareUrl() {
   const url = new URL(window.location.href);
   url.searchParams.set('guild', state.guild);
   url.searchParams.set('bin', state.binId);
-  if (state.pwd) url.searchParams.set('pwd', state.pwd);
-  // const mk = localStorage.getItem('mwi_master_key');
+  // 密码已固定为常量 SHARE_PASSWORD，不写入 URL（现有 bin 兼容）
   // if (mk) url.searchParams.set('mk', mk);
   return url.toString();
 }
@@ -1523,17 +1522,15 @@ function copyShareUrl() {
 }
 async function createShare() {
   const guild = document.getElementById('share-guild').value.trim();
-  const password = document.getElementById('share-password').value.trim();
   const masterKey = document.getElementById('share-masterkey').value.trim();
-  if (!guild || !password || !masterKey) { alert(t('fillAll')); return; }
+  if (!guild || !masterKey) { alert(t('fillAll')); return; }
   try {
     localStorage.setItem('mwi_master_key', masterKey);
     state.guild = guild;
-    const binId = await createBin(guild, password, masterKey);
+    const binId = await createBin(guild, SHARE_PASSWORD, masterKey);
     if (!binId) { alert(t('createFailed')); return; }
     state.binId = binId;
-    state.encKey = await deriveKey(password, guild);
-    state.pwd = password;
+    state.encKey = await deriveKey(SHARE_PASSWORD, guild);
     state.isShared = true;
     saveData();
     closeShareDialog();
@@ -1570,19 +1567,12 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const guild = params.get('guild');
   const bin = params.get('bin');
-  const pwd = params.get('pwd');
   const mk = params.get('mk');
   if (mk) localStorage.setItem('mwi_master_key', mk);
   if (guild && bin) {
     state.guild = guild; state.binId = bin; state.isShared = true;
-    let loadedFromShare = false;
-    if (pwd) {
-      state.pwd = pwd;
-      state.encKey = await deriveKey(pwd, guild);
-      loadedFromShare = await loadFromBin();
-    } else {
-      loadedFromShare = await loadFromBin();
-    }
+    state.encKey = await deriveKey(SHARE_PASSWORD, guild);
+    let loadedFromShare = await loadFromBin();
     updateConnectionStatus();
     if (!state.trials) state.trials = [{skill:0,max:20},{skill:1,max:20},{skill:2,max:20},{skill:3,max:20}];
     renderAll();
