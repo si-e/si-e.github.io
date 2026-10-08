@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         MWI Data Export / 银河奶牛数据导出
 // @namespace    https://www.milkywayidle.com/
-// @version      0.6.0
-// @description  Export your MWI guild members' full profile data (skills + equipment) to a JSON file for the MWI Trial Calculator.
-// @description:zh-CN 导出银河奶牛公会成员的完整数据（技能+装备）为 JSON 文件，供试炼计算器导入。进入公会成员页后会自动采集全部成员数据。
+// @version      0.9.0
+// @description  Export your MWI guild members' full profile data (skills + equipment + personal shrine buffs + achievements + guild building levels) to a JSON file for the MWI Trial Calculator.
+// @description:zh-CN 导出银河奶牛公会成员的完整数据（技能+装备+个人神龛增益+成就+公会建筑等级）为 JSON 文件，供试炼计算器导入。仅在「公会 - 成员」界面显示按钮：点一下「开始采集公会成员」即逐个采集全部成员（含自己），采集完成后自动导出 JSON。
 // @author       Guild Tools (modified)
 // @license      MIT
 // @match        https://www.milkywayidle.com/*
@@ -17,7 +17,7 @@
 (function () {
     'use strict';
 
-    const SCRIPT_VERSION = '0.6.0';
+    const SCRIPT_VERSION = '0.9.0';
     const EQUIPPED_LOCATION_PREFIX = '/item_locations/';
     const INVENTORY_LOCATION = '/item_locations/inventory';
 
@@ -38,61 +38,103 @@
         abilities: new Map(),
         dataReady: false,
         cachedProfiles: new Map(),
+        // 本次会话累计收到的 profile_shared 次数（重新采集时 Map.size 不会增长，用它判断“又采到一个”）
+        captures: 0,
         statusButton: null,
         seenEvents: new WeakSet(),
         mwiSocket: null,
+        // 个人神龛增益等级（键 /guild_buffs/<shrine>_skilling，来自 guild_buffs_updated 的 characterGuildBuffMap）
+        guildBuffLevelMap: null,
+        // 公会建筑等级（键 /guild_buildings/<building>，公会全局，来自 guild_updated 的 guildBuildingLevelMap）
+        guildBuildingLevelMap: null,
+        // 成就全表（自己角色，来自 init_character_data / achievements_updated；仅用于无采集数据时的兜底）
+        achievements: null,
         chatPayloadTemplate: (() => {
             try { return localStorage.getItem('mwi-export:chat-payload-template'); } catch (_) { return null; }
         })(),
     };
 
-    function setStatus(text, kind = 'idle') {
-        if (!state.statusButton) return;
-        state.statusButton.textContent = `导出：${text}`;
-        state.statusButton.dataset.kind = kind;
+    // ── 页面上唯一的按钮（只在「公会 - 成员」界面显示）───────────────
+    // 流程：点「开始采集公会成员」→ 逐个采集 → 采集完成自动导出 JSON。
+    // 不再区分「重新采集」与「导出」两个按钮，也不再在待机时显示「已缓存 N 人」。
+    // 状态机：idle（开始采集）→ running（采集中 x/y）→ done（已导出 N 人）/ error。
+    const btnState = { phase: 'idle', sent: 0, total: 0, count: 0 };
+
+    function renderStatus() {
+        const b = state.statusButton;
+        if (!b) return;
         const colors = {
-            idle: ['#2f3448', '#d9ddf2'],
+            idle: ['#3a5fc8', '#ffffff'],
             good: ['#24543a', '#d8ffe8'],
             busy: ['#66511f', '#fff0bd'],
             error: ['#6a2d35', '#ffe0e4'],
         };
+        let kind = 'idle';
+        let text = '开始采集公会成员';
+        if (btnState.phase === 'running') {
+            kind = 'busy';
+            text = `采集中 ${btnState.sent}/${btnState.total}`;
+        } else if (btnState.phase === 'done') {
+            kind = 'good';
+            text = `已导出 ${btnState.count} 人 · 点此重采`;
+        } else if (btnState.phase === 'error') {
+            kind = 'error';
+            text = '采集失败 · 点此重试';
+        }
         const [background, color] = colors[kind] || colors.idle;
-        state.statusButton.style.background = background;
-        state.statusButton.style.color = color;
+        b.textContent = text;
+        b.dataset.kind = kind;
+        b.style.background = background;
+        b.style.color = color;
+        b.disabled = btnState.phase === 'running';
+    }
+
+    // 只在「公会 - 成员」界面（公会成员表格出现时）显示按钮
+    function isOnGuildMembersPage() {
+        return !!document.querySelector('[class*="GuildPanel_membersTable"]');
+    }
+
+    function syncButtonVisibility() {
+        const b = state.statusButton;
+        if (!b) return;
+        b.style.display = isOnGuildMembersPage() ? '' : 'none';
     }
 
     function addStatusButton() {
         if (state.statusButton || !document.body) return;
-        const btnStyle = {
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.title = '在「公会 - 成员」页采集全部成员数据并自动导出 JSON';
+        Object.assign(button.style, {
             position: 'fixed',
             zIndex: '2147483647',
+            right: '12px',
+            bottom: '12px',
             border: '1px solid rgba(255,255,255,.22)',
             borderRadius: '8px',
             padding: '7px 10px',
             fontSize: '12px',
             cursor: 'pointer',
             boxShadow: '0 2px 10px rgba(0,0,0,.3)',
-        };
-
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.title = '点击导出数据到 JSON / Click to export data';
-        Object.assign(button.style, btnStyle, { right: '12px', bottom: '12px' });
-        button.addEventListener('click', exportJsonData);
-        document.body.appendChild(button);
-        state.statusButton = button;
-        setStatus('等待人物数据');
-
-        const autoBtn = document.createElement('button');
-        autoBtn.type = 'button';
-        autoBtn.textContent = '重新采集';
-        autoBtn.title = '进入公会成员页会自动采集；点此可强制重新采集一遍';
-        Object.assign(autoBtn.style, btnStyle, { right: '12px', bottom: '48px', background: '#3a5fc8', color: '#fff' });
-        autoBtn.addEventListener('click', () => {
-            autoTrigger.reset();
+            display: 'none',
+        });
+        button.addEventListener('click', () => {
+            if (btnState.phase === 'running') return;
             autoClickMembers({ force: true });
         });
-        document.body.appendChild(autoBtn);
+        document.body.appendChild(button);
+        state.statusButton = button;
+        renderStatus();
+
+        // 公会是 SPA，成员面板会动态出现 / 消失 —— 用 MutationObserver（防抖）跟踪显隐
+        let visTimer = null;
+        const observer = new MutationObserver(() => {
+            if (visTimer) return;
+            visTimer = setTimeout(() => { visTimer = null; syncButtonVisibility(); }, 300);
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        syncButtonVisibility();
     }
 
     function itemKey(item) {
@@ -167,6 +209,12 @@
                 name: String(obj.character.name || ''),
                 gameMode: String(obj.character.gameMode || ''),
             };
+            // 若服务端在角色对象里带了个人神龛增益，一并记下
+            const initBuffMap = obj.character.guildBuffLevelMap || obj.character.characterGuildBuffMap;
+            if (initBuffMap && typeof initBuffMap === 'object') state.guildBuffLevelMap = { ...initBuffMap };
+            // 自己角色的成就全表（个人数据；仅在完全没有采集到成员 profile 时用于兜底）
+            const initAch = obj.characterAchievements || obj.character.achievements;
+            if (initAch && typeof initAch === 'object') state.achievements = { ...initAch };
             mergeSkills(obj.characterSkills, true);
             mergeItems(obj.characterItems, true);
             mergeAbilities(obj.characterAbilities, true);
@@ -185,6 +233,28 @@
             if (obj.endCharacterItems) mergeItems(obj.endCharacterItems);
             if (obj.endCharacterAbilities) mergeAbilities(obj.endCharacterAbilities);
             changed = Boolean(obj.endCharacterSkills || obj.endCharacterItems || obj.endCharacterAbilities);
+        } else if (obj.type === 'achievements_updated') {
+            // 成就全表（自己角色）
+            const a = obj.characterAchievements || obj.endCharacterAchievements || obj.achievements;
+            if (a && typeof a === 'object') { state.achievements = { ...a }; changed = true; }
+        }
+
+        // 个人神龛增益等级（自己）：guild_buffs_updated 带 characterGuildBuffMap
+        // 键形如 /guild_buffs/force_skilling，与共享资料里的 guildBuffLevelMap 完全一致
+        if (obj.type === 'guild_buffs_updated' || obj.type === 'guild_buff_levels_updated') {
+            const m = obj.characterGuildBuffMap || obj.guildBuffLevelMap || obj.characterGuildBuffLevelMap;
+            if (m && typeof m === 'object') {
+                state.guildBuffLevelMap = { ...m };
+                changed = true;
+            }
+        }
+        // 公会建筑等级（公会全局）：guild_updated 带 guildBuildingLevelMap
+        if (obj.type === 'guild_updated' || obj.type === 'guild_buildings_updated') {
+            const m = obj.guildBuildingLevelMap || obj.guildBuildingLevelDict;
+            if (m && typeof m === 'object') {
+                state.guildBuildingLevelMap = { ...m };
+                changed = true;
+            }
         }
 
         if (obj.type === 'profile_shared') {
@@ -196,15 +266,15 @@
                     profile,
                     capturedAt: new Date().toISOString(),
                 });
-                const total = state.cachedProfiles.size + (state.character ? 1 : 0);
-                setStatus(`已缓存 ${total} 人，点击导出`, 'good');
+                state.captures = (state.captures || 0) + 1;
             }
         }
 
+        // 注意：待机状态不主动改按钮文案。旧版在这里显示「已缓存 N 人」会让人误以为
+        // 采集已完成（而且 N 里还含一个从未被采集过的「自己」）。按钮文案只由采集流程
+        // （autoClickMembers）与显隐逻辑驱动。
         if (changed) {
             state.dataReady = true;
-            const total = state.cachedProfiles.size + 1;
-            setStatus(`已缓存 ${total} 人，点击导出`, 'good');
         }
     }
 
@@ -406,6 +476,7 @@
             equipment,
             abilities,
             auras,
+            achievements: state.achievements ? { ...state.achievements } : null,
             capturedAt: new Date().toISOString(),
             source: location.hostname,
         };
@@ -425,58 +496,66 @@
     }
 
     function exportJsonData() {
-        const payload = buildPayload();
-        if (!payload && state.cachedProfiles.size === 0) {
-            setStatus('尚未读取人物', 'error');
-            alert('请先进入游戏，等待人物数据加载完成后再导出。\n\n如需导出公会成员，请在游戏中逐个点开成员资料页，脚本会自动缓存。');
-            return;
-        }
-
+        // 采集到的成员：自己与公会成员一视同仁 —— 全部来自本次采集结果，不做特殊处理、不偏好缓存。
         const members = [];
-
-        // 自己角色：从 buildPayload 构建 profile 格式
-        if (payload) {
-            members.push({
-                sharableCharacter: {
-                    name: payload.character.name,
-                    gameMode: payload.character.gameMode,
-                },
-                characterSkills: Object.entries(payload.skills).map(([k, v]) => ({
-                    skillHrid: '/skills/' + k,
-                    level: v,
-                })),
-                wearableItemMap: payload.equipment.reduce((m, eq) => {
-                    m['/item_locations/' + eq.slot] = {
-                        itemHrid: eq.itemHrid,
-                        enhancementLevel: eq.enhancementLevel,
-                    };
-                    return m;
-                }, {}),
-                _source: 'self',
-                _capturedAt: payload.capturedAt,
-            });
+        for (const [, cached] of state.cachedProfiles) {
+            if (cached.profile) members.push(cached.profile);
         }
 
-        // 公会成员：直接使用保存的完整 profile 对象
-        for (const [profileName, cached] of state.cachedProfiles) {
-            if (payload && profileName === payload.character.name) continue;
-            if (cached.profile) {
-                members.push(cached.profile);
+        // 兜底：一个成员 profile 都没采到时（例如没进公会成员页），用实时 WS 抓到的自己角色数据，
+        // 保留「只导出自己」的用法。这不参与正常采集流程。
+        if (members.length === 0) {
+            const payload = buildPayload();
+            if (payload) {
+                const rebuilt = {
+                    sharableCharacter: {
+                        name: payload.character.name,
+                        gameMode: payload.character.gameMode,
+                    },
+                    characterSkills: Object.entries(payload.skills).map(([k, v]) => ({
+                        skillHrid: '/skills/' + k,
+                        level: v,
+                    })),
+                    wearableItemMap: payload.equipment.reduce((m, eq) => {
+                        m['/item_locations/' + eq.slot] = {
+                            itemHrid: eq.itemHrid,
+                            enhancementLevel: eq.enhancementLevel,
+                        };
+                        return m;
+                    }, {}),
+                    _source: 'self',
+                    _capturedAt: payload.capturedAt,
+                };
+                const myBuffLevels = state.guildBuffLevelMap && Object.keys(state.guildBuffLevelMap).length
+                    ? { ...state.guildBuffLevelMap } : null;
+                if (myBuffLevels) rebuilt.guildBuffLevelMap = myBuffLevels;
+                // 成就信息也归属个人数据（实时抓到的成就全表）
+                if (payload.achievements) rebuilt.achievements = payload.achievements;
+                members.push(rebuilt);
             }
         }
 
         if (members.length === 0) {
-            setStatus('无数据可导出', 'error');
+            btnState.phase = 'error';
+            renderStatus();
+            alert('尚未采集到任何成员数据。\n\n请进入「公会 - 成员」列表页，点「开始采集公会成员」；采完后会自动导出 JSON。');
             return;
         }
+
+        // 公会建筑等级是公会全局数据，挂到第一位成员上供计算器导入时自动预填
+        const gwBuildings = state.guildBuildingLevelMap && Object.keys(state.guildBuildingLevelMap).length
+            ? { ...state.guildBuildingLevelMap } : null;
+        if (gwBuildings) members[0] = { ...members[0], _guildBuildingLevelMap: gwBuildings };
 
         const dateStr = new Date().toISOString().slice(0, 10);
         const filename = `MWI_公会_${members.length}人_${dateStr}.json`;
         downloadJSON(filename, members);
-        setStatus(`已导出 ${members.length} 人 (JSON)`, 'good');
+        btnState.phase = 'done';
+        btnState.count = members.length;
+        renderStatus();
     }
 
-    GM_registerMenuCommand('导出完整原始数据到 JSON', exportJsonData);
+    GM_registerMenuCommand('导出 JSON（当前已采集数据）', exportJsonData);
 
     // ── 自动遍历公会成员（免手动逐个点击）─────────────────────────
 
@@ -491,11 +570,11 @@
     const stepDelay = () => sleep(randInt(STEP_DELAY_MIN_MS, STEP_DELAY_MAX_MS));
     let autoClickRunning = false;
 
-    function waitForProfileCaptured(prevSize) {
+    function waitForProfileCaptured(prevCount) {
         return new Promise((resolve) => {
             const start = Date.now();
             const check = setInterval(() => {
-                if (state.cachedProfiles.size > prevSize) {
+                if ((state.captures || 0) > prevCount) {
                     clearInterval(check);
                     resolve(true);
                 } else if (Date.now() - start > AUTO_PROFILE_TIMEOUT_MS) {
@@ -834,8 +913,11 @@
 
         console.log(`[MWI Export] 提取到 ${memberNames.length} 个成员名:`, memberNames);
         if (memberNames.length === 0) {
-            if (force) alert('[MWI Export] 未提取到成员名字。请确认已打开公会成员列表页面。');
-            else console.warn('[MWI Export] 未提取到成员名字，跳过本次自动采集');
+            console.warn('[MWI Export] 未提取到成员名字');
+            if (force) {
+                btnState.phase = 'error'; renderStatus();
+                alert('[MWI Export] 未提取到成员名字。请确认已打开公会成员列表页面。');
+            }
             return;
         }
 
@@ -843,13 +925,15 @@
             || document.querySelector('[class*="chatInputContainer"] input')
             || document.querySelector('form input[type="text"]');
         if (!chatInput) {
-            if (force) alert('[MWI Export] 未找到聊天输入框。请确认聊天面板已打开。');
-            else console.warn('[MWI Export] 未找到聊天输入框，跳过本次自动采集');
+            console.warn('[MWI Export] 未找到聊天输入框');
+            if (force) {
+                btnState.phase = 'error'; renderStatus();
+                alert('[MWI Export] 未找到聊天输入框。请确认聊天面板已打开。');
+            }
             return;
         }
 
         autoClickRunning = true;
-        const myName = state.character?.name || '';
         let sent = 0;
         let captured = 0;
         const totalCount = memberNames.length;
@@ -859,27 +943,29 @@
         if (!wsReady) {
             const msg = '[MWI Export] 尚未连接到 MWI WebSocket，请等游戏加载完成再试。';
             if (force) alert(msg); else console.warn(msg);
-            setStatus('等待游戏连接', 'error');
+            btnState.phase = 'error'; renderStatus();
             autoClickRunning = false;
             return;
         }
 
         console.log('[MWI Export] 使用 WebSocket 直发 view_profile 模式');
-        setStatus(`采集中 0/${totalCount}`, 'idle');
+        btnState.phase = 'running'; btnState.sent = 0; btnState.total = totalCount;
+        renderStatus();
 
         for (const name of memberNames) {
-            if (myName && name === myName) continue;
-            if (state.cachedProfiles.has(name)) continue;
+            // 不做任何特殊处理：自己也在成员表里，一并重新采集；
+            // 已缓存过的成员也重新抓取（覆盖旧数据），判断“又采到一个”用 captures 计数而非 Map.size。
 
             // 1) 通过 WebSocket 直发 view_profile 消息
-            const prevSize = state.cachedProfiles.size;
+            const prevSize = state.captures || 0;
             const ok = sendViewProfileByWebSocket(name);
             if (!ok) {
                 console.error('[MWI Export] WebSocket 发送失败，中止');
                 break;
             }
             sent++;
-            setStatus(`采集中 ${sent}/${totalCount} · 已发送`, 'busy');
+            btnState.sent = sent;
+            renderStatus();
             console.log(`[MWI Export] (${sent}/${totalCount}) view_profile ${name}`);
 
             // 2) 等 profile_shared 到达
@@ -892,79 +978,37 @@
             }
 
             // 3) 等 0.5-1s，让游戏弹出的资料对话框完成渲染
-            setStatus(`采集中 ${sent}/${totalCount} · 准备关闭`, 'busy');
             await stepDelay();
 
             // 4) 关闭资料对话框
             closeProfileDialog();
 
             // 5) 等 0.5-1s，再进入下一个成员
-            setStatus(`采集中 ${sent}/${totalCount} · 等下一个`, 'idle');
             await stepDelay();
         }
 
-        const total = state.cachedProfiles.size + (state.character ? 1 : 0);
-        setStatus(`已缓存 ${total} 人，点击导出`, 'good');
-        console.log(`[MWI Export] 完成！发送 ${sent}，成功 ${captured}，总计 ${total} 人`);
-        if (force) alert(`自动采集完成：成功 ${captured} 人，总计 ${total} 人可导出。`);
         autoClickRunning = false;
+        const total = state.cachedProfiles.size;
+        console.log(`[MWI Export] 完成！发送 ${sent}，成功 ${captured}，总计 ${total} 人`);
+        btnState.count = captured;
+        btnState.phase = captured > 0 ? 'done' : 'error';
+        renderStatus();
+        if (captured > 0) {
+            // 采集完成 → 自动导出，不需要再单独点「导出」
+            console.log('[MWI Export] 采集完成，自动导出 JSON');
+            exportJsonData();
+        } else if (force) {
+            alert('自动采集失败：没有捕获到任何成员数据，请稍后重试。');
+        }
     }
 
-    GM_registerMenuCommand('自动采集公会成员数据', () => autoClickMembers({ force: true }));
-
-    // ── 检测公会成员页出现后自动触发采集，无需手动点按钮 ──────────
-    const autoTrigger = (() => {
-        let triggered = false;
-        let debounceTimer = null;
-        let observer = null;
-
-        function check() {
-            if (triggered || autoClickRunning) return;
-            const rows = document.querySelectorAll('[class*="GuildPanel_membersTable"] tbody tr');
-            if (rows.length === 0) return;
-            const chatInput = document.querySelector('[class*="Chat_chatInputContainer"] input')
-                || document.querySelector('[class*="chatInputContainer"] input')
-                || document.querySelector('form input[type="text"]');
-            if (!chatInput) return;
-            // 等待自己的角色数据先到位，避免把自己也当成员发一次 /profile
-            if (!state.character) return;
-
-            // 成员表格首次渲染时可能还在陆续追加行，等 DOM 稳定后再采集
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                if (triggered || autoClickRunning) return;
-                triggered = true;
-                const count = document.querySelectorAll('[class*="GuildPanel_membersTable"] tbody tr').length;
-                console.log(`[MWI Export] 检测到公会成员列表(${count}人)，自动开始采集`);
-                setStatus('自动采集准备中…', 'busy');
-                autoClickMembers().catch((err) => {
-                    console.error('[MWI Export] 自动采集失败:', err);
-                    triggered = false;
-                });
-            }, 1200);
-        }
-
-        function start() {
-            if (observer) return;
-            observer = new MutationObserver(check);
-            observer.observe(document.body, { childList: true, subtree: true });
-            check();
-        }
-
-        function reset() {
-            triggered = false;
-            clearTimeout(debounceTimer);
-        }
-
-        return { start, reset };
-    })();
+    GM_registerMenuCommand('采集公会成员并保存 JSON', () => autoClickMembers({ force: true }));
 
     hookWebSocketMessages();
     hookWebSocketSend();
 
     function boot() {
         addStatusButton();
-        // autoTrigger.start();
     }
 
     if (document.readyState === 'loading') {
