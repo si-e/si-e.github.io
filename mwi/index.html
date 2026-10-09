@@ -825,6 +825,7 @@ const I18N = {
     enterPassword:'请输入访问密码:', fillAll:'请填写所有字段',
     createFailed:'创建失败，请检查 Master Key', addMembersFirst:'请先添加成员数据',
     importSuccess:'导入成功', importFailed:'未找到有效数据',
+    importMergeReport:'导入完成：更新 {upd} 人 · 新增 {add} 人 · 保留 {keep} 人（本地已有、采集数据中未包含）',
     teamWork:'团队工作能力', nextClearNeeds:'下1次还需', pts:'点', perSec:'点/秒',
     trial:'试炼', language:'中/EN', theme:'🌙',
     globalBuffs:'全局加成',
@@ -891,6 +892,7 @@ const I18N = {
     enterPassword:'Enter access password:', fillAll:'Please fill in all fields',
     createFailed:'Creation failed, please check Master Key', addMembersFirst:'Please add member data first',
     importSuccess:'Imported successfully', importFailed:'No valid data found',
+    importMergeReport:'Import complete: {upd} updated \u00b7 {add} added \u00b7 {keep} kept (already local, not in the exported data)',
     teamWork:'Team Work', nextClearNeeds:'Next clear needs', pts:'pts', perSec:'pts/s',
     trial:'Trial', language:'中/EN', theme:'☀️',
     globalBuffs:'Global Buffs',
@@ -937,6 +939,10 @@ const I18N = {
   }
 };
 function t(key) { return (I18N[state.lang] && I18N[state.lang][key]) || key; }
+// 文案占位符填充：tplFill(t('importMergeReport'), { upd:1, add:2, keep:3 }) —— 找不到的键原样保留 {key}
+function tplFill(s, vars) {
+  return String(s).replace(/\{(\w+)\}/g, function(m, k){ return (vars && vars[k] != null) ? vars[k] : m; });
+}
 function skillLabel(idx) { return I18N[state.lang].skillLabels[idx]; }
 function equipLabel(idx) { return I18N[state.lang].equipLabels[idx]; }
 // 生活装备「拥有制」槽位的显示名（上衣 / 下装 / 披风）
@@ -2848,6 +2854,81 @@ async function persistAfterImport() {
   }
 }
 
+// === 合并导入（游戏成员 profile 数组）===
+// 旧行为是「整体替换 state.members」，会把成员手动补的数据一把冲掉 —— 尤其是游戏导出
+// 根本不包含的「装备拥有集合」（profile_shared 只有当前穿戴的 24 件，没有背包）。
+// 现在按角色名合并：
+//   · 同名成员 → 游戏权威字段（等级 / 配装槽 / 神龛 / 房屋 / 成就 / 原始 dict）用采集值更新；
+//                装备拥有集合取并集 —— 手动勾的保留，采集到的新穿戴装备补进来。
+//   · 采集里没有的名字 → 作为新成员追加。
+//   · 本地有、采集里没有的成员（手动加的人 / 已退会的人）→ 原样保留，一个都不删。
+
+// 拥有集合并集：本地已有同家族的（普通款与 ★ 精炼款在游戏里互斥，只认一个）一律保留本地；
+// 其余用采集值补进来并夹取强化范围。
+function mergeOwnedEquip(local, remote) {
+  const out = {};
+  for (const slot of Object.keys(local || {})) out[slot] = Object.assign({}, local[slot]);
+  for (const slot of Object.keys(remote || {})) {
+    if (!out[slot]) out[slot] = {};
+    const fams = {};
+    for (const k of Object.keys(out[slot])) fams[iconBaseId(k)] = true;
+    const src = remote[slot] || {};
+    for (const k of Object.keys(src)) {
+      const base = iconBaseId(k);
+      if (fams[base]) continue;          // 同家族本地已有 → 保留本地的（不覆盖、不并存）
+      out[slot][k] = clampEnhance(src[k]);
+      fams[base] = true;
+    }
+  }
+  return out;
+}
+
+// 用一条新采集的 profile 更新已有成员（就地修改并返回 old）
+function mergeMemberFresh(old, fresh) {
+  const owned = mergeOwnedEquip(old.ownedEquip, fresh.ownedEquip);
+  Object.assign(old, fresh);   // 游戏权威字段整体覆盖（fresh 里没有 id / _ts，不受影响）
+  old.ownedEquip = owned;      // 拥有集合 = 并集（手动补的不能丢）
+  old._ts = Date.now();
+  return old;
+}
+
+// 把采集到的 profile 数组合并进当前名单，返回统计 { updated, added, kept }；无有效成员时返回 null。
+function mergeMembersFromProfiles(profiles) {
+  if (!Array.isArray(profiles)) profiles = [profiles];
+  const byName = {};
+  for (const m of state.members) {
+    const k = String(m.name || '').trim();
+    if (k && byName[k] === undefined) byName[k] = m;
+  }
+  const usedIds = {};
+  const seen = {};
+  const added = [];
+  let updated = 0;
+  let nextId = 0;
+  for (const m of state.members) nextId = Math.max(nextId, (Number(m.id) || 0) + 1);
+  for (const profile of profiles) {
+    const fresh = parseMemberFromProfile(profile);
+    if (!fresh) continue;
+    const k = String(fresh.name || '').trim();
+    if (seen[k]) continue;               // 采集数据里同一个人出现多次 → 只取第一条
+    seen[k] = true;
+    const old = k ? byName[k] : undefined;
+    if (old && !usedIds[old.id]) {
+      mergeMemberFresh(old, fresh);      // 已存在 → 更新（并保留手动补的拥有集合）
+      usedIds[old.id] = true;
+      updated++;
+    } else {
+      fresh.id = nextId++;
+      fresh._ts = Date.now();
+      added.push(fresh);                 // 新成员 → 追加
+    }
+  }
+  if (!updated && !added.length) return null;
+  const kept = state.members.filter(function(m){ return !usedIds[m.id]; }).length;
+  state.members = state.members.concat(added);
+  return { updated: updated, added: added.length, kept: kept };
+}
+
 function importJson() {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = '.json';
@@ -2870,30 +2951,17 @@ function importJson() {
         return;
       }
 
-      // ② 游戏导出的成员 profile 数组
+      // ② 游戏导出的成员 profile 数组 → 按角色名「合并」进现有名单（不再整体替换）
       if (!Array.isArray(parsed)) { alert(t('importFormatUnknown')); return; }
-      const membersData = parsed;
-      const newMembers = [];
-      for (const profile of membersData) {
-        const m2 = parseMemberFromProfile(profile);
-        if (m2) {
-          m2.id = newMembers.length > 0 ? newMembers[newMembers.length-1].id + 1 : 0;
-          m2._ts = Date.now();   // 标记为最新，避免被旧共享 bin 数据在合并时覆盖
-          newMembers.push(m2);
-        }
-      }
-      if (newMembers.length > 0) {
-        state.members = newMembers;
-        state.deletedIds = [];
-        applyImportedGuildBuildings(membersData);   // 若导出数据带公会建筑等级（guild_updated），自动预填
-        applyTrialCaps();
-        await persistAfterImport();
-        renderAll();
-        if (state.members.length > 0) calculate();
-        alert(t('importSuccess')+': '+newMembers.length);
-      } else {
-        alert(t('importFailed'));
-      }
+      const stat = mergeMembersFromProfiles(parsed);
+      if (!stat) { alert(t('importFailed')); return; }
+      state.deletedIds = [];                      // 本端名单只增不减，历史删除标记已无意义
+      applyImportedGuildBuildings(parsed);        // 若导出数据带公会建筑等级（guild_updated），自动预填
+      applyTrialCaps();
+      await persistAfterImport();
+      renderAll();
+      if (state.members.length > 0) calculate();
+      alert(tplFill(t('importMergeReport'), { upd: stat.updated, add: stat.added, keep: stat.kept }));
     };
     reader.readAsText(file, 'UTF-8');
   };
