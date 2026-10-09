@@ -124,6 +124,23 @@ table.member-table td input:focus { border-color:var(--accent); background:var(-
 /* 「详情」列：专业 / 装备 / 房屋 / 神龛 / 成就 等全部个人数据移入成员详情弹窗 */
 table.member-table th.detail-col { min-width:52px; }
 table.member-table td.detail-cell { text-align:center; }
+/* 「主力专业」列：等级最高的 3 个专业 = 技能图标 + 等级 + 对应工具图标（名称 / 强化在悬停提示里） */
+table.member-table th.topskill-col { min-width:196px; text-align:left; }
+table.member-table td.topskill-cell { text-align:left; }
+.ts-list { display:flex; align-items:center; gap:5px; }
+.ts-chip { display:flex; align-items:center; gap:3px; padding:1px 5px; border:1px solid var(--border); border-radius:5px; background:var(--input-bg); }
+.ts-chip svg { display:block; flex:none; }
+.ts-lv { font-size:11px; font-weight:600; color:var(--text); min-width:15px; text-align:center; }
+.ts-tool { display:flex; align-items:center; }
+.ts-tool.is-none { width:16px; height:16px; border:1px dashed var(--border); border-radius:4px; }
+.ts-empty { color:var(--text-faint); font-size:12px; }
+/* 「主手」列：装备图标 + 强化角标（行内小号，与详情弹窗的 .equip-cell 区分开） */
+table.member-table th.mainhand-col { min-width:56px; }
+table.member-table td.mainhand-cell { text-align:center; }
+.mini-equip { position:relative; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; vertical-align:middle; }
+.mini-equip svg { display:block; flex:none; }
+.mini-equip .mini-enh { position:absolute; top:-3px; left:-3px; background:var(--enhance-badge-bg); color:var(--enhance-badge-fg); font-size:9px; font-weight:700; border-radius:3px; padding:0 2px; line-height:12px; }
+.mini-equip.is-empty { color:var(--text-faint); font-size:12px; }
 /* 成员详情弹窗正文（专业 / 装备 / 房屋 / 神龛 / 成就，按分组网格排布） */
 .detail-body { overflow-y:auto; min-height:0; }
 .detail-section { border-top:1px solid var(--border); padding-top:8px; }
@@ -811,6 +828,9 @@ const I18N = {
     exportSuccess:'已导出',
     importFormatUnknown:'无法识别的 JSON：应为「本计算器导出的备份」或「游戏成员 profile 数组」',
     calculate:'计算最优分配', assignCol:'分配', nameCol:'角色名', maxMembers:'人数上限',
+    topSkillCol:'主力专业', topSkillTip:'该成员等级最高的 3 个专业（等级 0 不列出）：技能图标 + 等级 + 该专业当前使用的工具；无工具时显示空心框。悬停可看名称与强化等级。',
+    mainHandCol:'主手', mainHandTip:'主手战斗武器；悬停可看名称与强化等级。',
+    noToolEquipped:'未选择工具', noMainHand:'未选择主手武器',
     trialSlotsAuto:'由生活营地决定', trialSlotsFromCamp:'生活营地 Lv{level}：{base} + {level}×{per} = {cap}',
     noAssign:'(暂无分配)', noMembers:'暂无成员数据，请添加成员或导入 JSON',
     totalFinalLv:'总最终等级', totalPasses:'总通关', assigned:'已分配', unassigned:'未分配',
@@ -878,6 +898,9 @@ const I18N = {
     exportSuccess:'Exported',
     importFormatUnknown:'Unrecognized JSON: expected a calculator backup or a members profile array',
     calculate:'Calculate', assignCol:'Assign', nameCol:'Name', maxMembers:'Max',
+    topSkillCol:'Top Skills', topSkillTip:'The 3 highest skill levels of this member (level 0 is hidden): skill icon + level + the tool currently used for that skill; an empty box means no tool. Hover for the name and enhancement level.',
+    mainHandCol:'Main Hand', mainHandTip:'Main-hand combat weapon; hover for its name and enhancement level.',
+    noToolEquipped:'No tool selected', noMainHand:'No main-hand weapon',
     trialSlotsAuto:'set by Skilling Encampment', trialSlotsFromCamp:'Skilling Encampment Lv{level}: {base} + {level}×{per} = {cap}',
     noAssign:'(None)', noMembers:'No member data. Add members or import JSON.',
     totalFinalLv:'Total Final Lv', totalPasses:'Total Passes', assigned:'Assigned', unassigned:'Unassigned',
@@ -955,6 +978,8 @@ function lifeSlotLabel(slot) {
 const SKILL_KEYS = ['milking','foraging','woodcutting','cheesesmithing','crafting','tailoring','cooking','brewing','alchemy','enhancing'];
 const EQUIP_TYPES = ['主手','副手','头部','身体','手部','腿部','脚部','项链','耳环','戒指','袋子','背部','挤奶工具','采摘工具','伐木工具','奶酪锻造工具','制作工具','缝纫工具','烹饪工具','冲泡工具','炼金工具','强化工具'];
 const TOOL_SKILL_MAP = {'挤奶工具':'milking','采摘工具':'foraging','伐木工具':'woodcutting','奶酪锻造工具':'cheesesmithing','制作工具':'crafting','缝纫工具':'tailoring','烹饪工具':'cooking','冲泡工具':'brewing','炼金工具':'alchemy','强化工具':'enhancing'};
+// 反查：技能 id → 对应生活工具槽位（主表「主力专业」列要顺着专业找工具）
+const SKILL_TOOL_SLOT = (function(){ const m = {}; for (const s in TOOL_SKILL_MAP) m[TOOL_SKILL_MAP[s]] = s; return m; })();
 // 装备分三区：「生活装备」（纯生活件，勾选制）、「生活 · 战斗两用」（一槽一件，配装制）、
 // 「战斗装备 + 生活工具」（一槽一件，配装制）。后两区都走同一个 openEquipPicker 选择器。
 const TOOL_SLOTS = EQUIP_TYPES.filter(function(s){ return s.indexOf('工具') >= 0; });
@@ -1887,6 +1912,9 @@ function renderTableHeader() {
   let html = '<tr>';
   html += '<th class="assign-col">'+t('assignCol')+'</th>';
   html += '<th class="name-col">'+t('nameCol')+'</th>';
+  // 主表保留两列速览信息：等级最高的 3 个专业（含对应工具）与主手战斗武器
+  html += '<th class="topskill-col" title="'+escHtml(t('topSkillTip'))+'">'+t('topSkillCol')+'</th>';
+  html += '<th class="mainhand-col" title="'+escHtml(t('mainHandTip'))+'">'+t('mainHandCol')+'</th>';
   // 专业等级(10) / 装备(22) / 房屋(17) / 神龛(10) / 成就(6) 全部个人数据已移入「详情」弹窗（见 openMemberDetail）
   html += '<th class="detail-col">'+t('detailBtn')+'</th>';
   html += '<th></th>';
@@ -2031,7 +2059,7 @@ function renderMemberTable() {
   // 装备数据归一化（旧「一槽一件」的身体/腿部/背部 → 生活装备「拥有制」集合；幂等）
   for (const p of state.members) normalizeMemberEquip(p);
   if (state.members.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-faint);padding:20px">'+t('noMembers')+'</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-faint);padding:20px">'+t('noMembers')+'</td></tr>';
     return;
   }
   tbody.innerHTML = state.members.map(p => {
@@ -2048,10 +2076,60 @@ function renderMemberTable() {
     return '<tr>'+
       '<td class="assign-cell '+assignClass+'">'+assignContent+'</td>'+
       '<td class="name-cell"><input type="text" value="'+escHtml(p.name)+'" onchange="updateMemberName('+p.id+',this.value)"></td>'+
+      '<td class="topskill-cell" title="'+escHtml(t('topSkillTip'))+'">'+memberTopSkillsHtml(p)+'</td>'+
+      '<td class="mainhand-cell">'+memberMainHandHtml(p)+'</td>'+
       '<td class="detail-cell"><button class="btn btn-sm" onclick="openMemberDetail('+p.id+')">'+t('detailBtn')+'</button></td>'+
       '<td><button class="btn btn-sm btn-danger" onclick="removeMember('+p.id+')">'+t('deleteBtn')+'</button></td>'+
     '</tr>';
   }).join('');
+}
+
+// === 主表「主力专业」/「主手」两列的渲染 ===
+// 成员等级最高的 n 个专业（等级降序，同等级按技能顺序稳定）；等级为 0 的不列出（全 0 → 空数组）
+function memberTopSkills(p, n) {
+  const arr = [];
+  for (let s = 0; s < SKILL_KEYS.length; s++) arr.push({ idx:s, lv:Number((p.levels||[])[s]) || 0 });
+  arr.sort(function(a, b){ return (b.lv - a.lv) || (a.idx - b.idx); });
+  return arr.slice(0, n).filter(function(x){ return x.lv > 0; });
+}
+// 某成员在某槽位已选的装备（未选 → null）
+function equippedItem(p, slot) {
+  const eq = p && p.equipment && p.equipment[slot];
+  return (eq && eq.iconId) ? eq : null;
+}
+// 装备显示名：生活装备家族用中文名，其余（工具 / 武器）与装备选择器一致，用 iconId 去下划线
+function equipDisplayName(iconId) {
+  const base = iconBaseId(iconId);
+  const fams = (typeof EQUIP_FAMILIES !== 'undefined') ? EQUIP_FAMILIES : {};
+  for (const s in fams) for (const f of fams[s]) if (f.id === base) return familyName(base, f.name);
+  return familyName(base);
+}
+// 「主力专业」单元格：3 个胶囊（技能图标 + 等级 + 对应工具图标）
+function memberTopSkillsHtml(p) {
+  const top = memberTopSkills(p, 3);
+  if (!top.length) return '<span class="ts-empty">-</span>';
+  return '<span class="ts-list">' + top.map(function(it){
+    const key = SKILL_KEYS[it.idx];
+    const toolSlot = SKILL_TOOL_SLOT[key];
+    const eq = toolSlot ? equippedItem(p, toolSlot) : null;
+    const ttl = skillLabel(it.idx) + ' Lv' + it.lv + ' · ' + (toolSlot || '-')
+      + '：' + (eq ? equipDisplayName(eq.iconId) + ' +' + (eq.enhance||0) : t('noToolEquipped'));
+    return '<span class="ts-chip" title="'+escHtml(ttl)+'">'
+      + svgIcon(SKILL_KEYS[it.idx], 18, 18)
+      + '<span class="ts-lv">'+it.lv+'</span>'
+      + (eq
+          ? '<span class="ts-tool">'+svgIcon(eq.iconId, 16, 16)+'</span>'
+          : '<span class="ts-tool is-none" title="'+escHtml(t('noToolEquipped'))+'"></span>')
+      + '</span>';
+  }).join('') + '</span>';
+}
+// 「主手」单元格：装备图标 + 强化角标（未选 → '-'）
+function memberMainHandHtml(p) {
+  const eq = equippedItem(p, '主手');
+  if (!eq) return '<span class="mini-equip is-empty" title="'+escHtml(t('noMainHand'))+'">-</span>';
+  const ttl = equipDisplayName(eq.iconId) + ' +' + (eq.enhance||0);
+  return '<span class="mini-equip" title="'+escHtml(ttl)+'">'+svgIcon(eq.iconId, 26, 26)
+    + '<span class="mini-enh">+'+(eq.enhance||0)+'</span></span>';
 }
 
 // === 成员详情弹窗：专业 / 装备 / 房屋 / 神龛 / 成就 等个人数据集中编辑 ===
