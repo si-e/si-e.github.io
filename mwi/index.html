@@ -21,6 +21,7 @@
   --equip-hover:#f0f7ff; --icon-name-bg:#333; --icon-name-fg:#fff;
   --enhance-sel-bg:#4a90d9; --enhance-sel-fg:#fff;
   --conn-bg:#f0f0f0; --danger:#d9534f; --search-border:#ccc;
+  --icon-tile:rgba(0,0,0,.14);
 }
 [data-theme="dark"] {
   --bg:#1a1a2e; --surface:#16213e; --border:#30475e; --text:#e0e0e0; --text-muted:#a0a0a0; --text-faint:#666;
@@ -36,6 +37,7 @@
   --equip-hover:#1a2744; --icon-name-bg:#e0e0e0; --icon-name-fg:#16213e;
   --enhance-sel-bg:#4a90d9; --enhance-sel-fg:#fff;
   --conn-bg:#0f1623; --danger:#ef5350; --search-border:#30475e;
+  --icon-tile:rgba(255,255,255,.12);
 }
 body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); font-size:14px; transition:background .2s,color .2s; }
 h1 { font-size:20px; }
@@ -87,12 +89,20 @@ h2 { font-size:16px; margin:10px 0 8px; color:var(--text-muted); }
 
 /* Trial Config */
 .trial-section { padding:10px 20px; }
-.trial-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-@media(max-width:1000px){ .trial-cards{grid-template-columns:repeat(2,1fr);} }
-@media(max-width:600px){ .trial-cards{grid-template-columns:1fr;} }
+.trial-head { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin:10px 0 8px; }
+.trial-head h2 { margin:0; }
+.trial-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+/* 「未分配成员」与 4 张试炼卡同一行，作为较窄的第 5 块（卡片宽度只略微变窄） */
+.trial-cards.has-unassigned { grid-template-columns:repeat(4,minmax(0,1fr)) 200px; }
+@media(max-width:1280px){
+  .trial-cards.has-unassigned { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .trial-cards.has-unassigned .unassigned-panel { grid-column:1/-1; }
+}
+@media(max-width:1000px){ .trial-cards, .trial-cards.has-unassigned{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media(max-width:600px){ .trial-cards, .trial-cards.has-unassigned{grid-template-columns:1fr;} }
 .trial-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; }
 .trial-card-header { display:flex; align-items:center; gap:8px; }
-.trial-skill-icon { width:40px; height:40px; cursor:pointer; border:2px solid transparent; border-radius:6px; transition:border-color .15s; }
+.trial-skill-icon { width:40px; height:40px; cursor:pointer; border:2px solid transparent; border-radius:6px; transition:border-color .15s; background:var(--icon-tile); }
 .trial-skill-icon:hover { border-color:var(--accent); }
 .trial-skill-icon svg { width:100%; height:100%; }
 .trial-card-info { flex:1; }
@@ -109,6 +119,13 @@ h2 { font-size:16px; margin:10px 0 8px; color:var(--text-muted); }
 .trial-member-item .ml { color:var(--text-muted); }
 .trial-member-item .mr { color:var(--text-faint); }
 .trial-result { font-size:11px; font-weight:600; color:var(--accent); padding-top:4px; border-top:1px solid var(--list-border); line-height:1.5; }
+
+/* 未分配成员（与试炼卡同排的窄块；名单样式与试炼卡里的成员列表一致） */
+.unassigned-panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.unassigned-head { display:flex; flex-direction:column; gap:2px; }
+.unassigned-title { font-size:14px; font-weight:600; color:var(--text); }
+.unassigned-title .unassigned-num { color:var(--danger); }
+.unassigned-panel .trial-member-list { flex:1; min-height:60px; max-height:none; }
 
 /* Member Table */
 .member-section { padding:10px 20px; }
@@ -129,7 +146,7 @@ table.member-table th.topskill-col { min-width:196px; text-align:left; }
 table.member-table td.topskill-cell { text-align:left; }
 .ts-list { display:flex; align-items:center; gap:5px; }
 .ts-chip { display:flex; align-items:center; gap:3px; padding:1px 5px; border:1px solid var(--border); border-radius:5px; background:var(--input-bg); }
-.ts-chip svg { display:block; flex:none; }
+.ts-chip svg { display:block; flex:none; background:var(--icon-tile); border-radius:3px; }
 .ts-lv { font-size:11px; font-weight:600; color:var(--text); min-width:15px; text-align:center; }
 .ts-tool { display:flex; align-items:center; }
 .ts-tool.is-none { width:16px; height:16px; border:1px dashed var(--border); border-radius:4px; }
@@ -187,7 +204,7 @@ table.member-table td.mainhand-cell { text-align:center; }
 .enh-pop-actions { display:flex; justify-content:space-between; gap:6px; }
 table.member-table tr:hover { background:var(--table-hover); }
 table.member-table td.assign-cell { font-weight:600; font-size:12px; }
-table.member-table td.assign-cell svg { width:22px; height:22px; }
+table.member-table td.assign-cell svg { width:22px; height:22px; background:var(--icon-tile); border-radius:4px; }
 .assign-T1 { background:var(--assign-t1-bg); }
 .assign-T2 { background:var(--assign-t2-bg); }
 .assign-T3 { background:var(--assign-t3-bg); }
@@ -212,7 +229,7 @@ table.member-table td.assign-cell svg { width:22px; height:22px; }
 
 /* Skill picker popup */
 .skill-picker-popup { position:absolute; background:var(--modal-bg); border:1px solid var(--border); border-radius:8px; padding:8px; z-index:200; display:grid; grid-template-columns:repeat(5,1fr); gap:6px; box-shadow:0 4px 12px var(--shadow); }
-.skill-picker-popup .skill-option { width:36px; height:36px; cursor:pointer; border:2px solid transparent; border-radius:6px; }
+.skill-picker-popup .skill-option { width:36px; height:36px; cursor:pointer; border:2px solid transparent; border-radius:6px; background:var(--icon-tile); }
 .skill-picker-popup .skill-option:hover { border-color:var(--accent); }
 .skill-picker-popup .skill-option svg { width:100%; height:100%; }
 .skill-picker-popup .skill-option.selected { border-color:var(--accent); background:var(--equip-hover); }
@@ -240,10 +257,24 @@ table.member-table td.assign-cell svg { width:22px; height:22px; }
 .equip-preview .equip-cell { border:1px solid var(--border); }
 .equip-preview-label { font-size:12px; color:var(--text-muted); }
 
-/* Summary */
-.summary-bar { padding:8px 20px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:20px; font-size:13px; flex-wrap:wrap; color:var(--text); }
-.summary-bar span { font-weight:600; }
-.summary-bar .summary-num { color:var(--accent); }
+/* 导入结果报告（更新 / 新增 / 保留 各一行；保留名单可删除） */
+.import-report { display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+.ir-row { border:1px solid var(--border); border-radius:6px; padding:8px 10px; background:var(--list-bg); }
+.ir-head { display:flex; align-items:baseline; gap:8px; }
+.ir-label { font-weight:600; font-size:13px; color:var(--text); }
+.ir-count { font-size:12px; font-weight:600; color:var(--accent); }
+.ir-names { display:flex; flex-wrap:wrap; gap:4px 6px; margin-top:6px; max-height:120px; overflow-y:auto; }
+.ir-name { font-size:12px; padding:1px 6px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text-muted); }
+/* 「保留」名单：悬停整体变删除按钮；点击进入确认态，再点一次才删 */
+.ir-name.ir-del { cursor:pointer; }
+.ir-name.ir-del:hover, .ir-name.ir-del.is-confirm { background:var(--danger); border-color:var(--danger); color:#fff; }
+.ir-name.ir-del:hover::after { content:' ✕'; }
+.ir-none { font-size:12px; color:var(--text-faint); }
+
+/* Summary（计算汇总，放在「试炼配置」标题行右侧，不用滚到底） */
+.summary-bar { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-muted); }
+.summary-bar span { font-weight:600; color:var(--text); }
+.summary-bar .summary-num { color:var(--accent); font-size:13px; }
 
 /* Share Dialog */
 .share-field { margin-bottom:8px; }
@@ -800,7 +831,10 @@ table.member-table td.assign-cell svg { width:22px; height:22px; }
 </div>
 
 <div class="trial-section">
-  <h2 id="h2-trial">试炼配置</h2>
+  <div class="trial-head">
+    <h2 id="h2-trial">试炼配置</h2>
+    <div class="summary-bar" id="summary-bar"></div>
+  </div>
   <div class="trial-cards" id="trial-cards"></div>
 </div>
 
@@ -813,8 +847,6 @@ table.member-table td.assign-cell svg { width:22px; height:22px; }
     </table>
   </div>
 </div>
-
-<div class="summary-bar" id="summary-bar"></div>
 
 <script>
 
@@ -834,6 +866,7 @@ const I18N = {
     trialSlotsAuto:'由生活营地决定', trialSlotsFromCamp:'生活营地 Lv{level}：{base} + {level}×{per} = {cap}',
     noAssign:'(暂无分配)', noMembers:'暂无成员数据，请添加成员或导入 JSON',
     totalFinalLv:'总最终等级', totalPasses:'总通关', assigned:'已分配', unassigned:'未分配',
+    unassignedTitle:'未分配成员',
     deleteBtn:'删', selectEquip:'选择装备', searchEquip:'搜索装备...',
     enhanceLevel:'强化等级', clear:'清除', cancel:'取消', confirm:'确认',
     noEquip:'未选择装备', passes:'次通关', people:'人', offlineMode:'离线模式',
@@ -845,7 +878,12 @@ const I18N = {
     enterPassword:'请输入访问密码:', fillAll:'请填写所有字段',
     createFailed:'创建失败，请检查 Master Key', addMembersFirst:'请先添加成员数据',
     importSuccess:'导入成功', importFailed:'未找到有效数据',
-    importMergeReport:'导入完成：更新 {upd} 人 · 新增 {add} 人 · 保留 {keep} 人（本地已有、采集数据中未包含）',
+    importRepTitle:'导入完成',
+    importRepUpdated:'更新',
+    importRepAdded:'新增',
+    importRepKept:'保留',
+    importRepNone:'（无）',
+    importDelConfirm:'确认删除?',
     teamWork:'团队工作能力', nextClearNeeds:'下1次还需', pts:'点', perSec:'点/秒',
     trial:'试炼', language:'中/EN', theme:'🌙',
     globalBuffs:'全局加成',
@@ -904,6 +942,7 @@ const I18N = {
     trialSlotsAuto:'set by Skilling Encampment', trialSlotsFromCamp:'Skilling Encampment Lv{level}: {base} + {level}×{per} = {cap}',
     noAssign:'(None)', noMembers:'No member data. Add members or import JSON.',
     totalFinalLv:'Total Final Lv', totalPasses:'Total Passes', assigned:'Assigned', unassigned:'Unassigned',
+    unassignedTitle:'Unassigned members',
     deleteBtn:'Del', selectEquip:'Select Equipment', searchEquip:'Search equipment...',
     enhanceLevel:'Enhancement Level', clear:'Clear', cancel:'Cancel', confirm:'Confirm',
     noEquip:'No equipment selected', passes:'passes', people:'people', offlineMode:'Offline',
@@ -915,7 +954,12 @@ const I18N = {
     enterPassword:'Enter access password:', fillAll:'Please fill in all fields',
     createFailed:'Creation failed, please check Master Key', addMembersFirst:'Please add member data first',
     importSuccess:'Imported successfully', importFailed:'No valid data found',
-    importMergeReport:'Import complete: {upd} updated \u00b7 {add} added \u00b7 {keep} kept (already local, not in the exported data)',
+    importRepTitle:'Import complete',
+    importRepUpdated:'Updated',
+    importRepAdded:'Added',
+    importRepKept:'Kept',
+    importRepNone:'(none)',
+    importDelConfirm:'Delete?',
     teamWork:'Team Work', nextClearNeeds:'Next clear needs', pts:'pts', perSec:'pts/s',
     trial:'Trial', language:'中/EN', theme:'☀️',
     globalBuffs:'Global Buffs',
@@ -962,7 +1006,7 @@ const I18N = {
   }
 };
 function t(key) { return (I18N[state.lang] && I18N[state.lang][key]) || key; }
-// 文案占位符填充：tplFill(t('importMergeReport'), { upd:1, add:2, keep:3 }) —— 找不到的键原样保留 {key}
+// 文案占位符填充：tplFill('已导入 {n} 人', { n:3 }) —— 找不到的键原样保留 {key}
 function tplFill(s, vars) {
   return String(s).replace(/\{(\w+)\}/g, function(m, k){ return (vars && vars[k] != null) ? vars[k] : m; });
 }
@@ -1856,7 +1900,8 @@ function runAssignment(people, cfgs) {
   for(let p=0;p<P;p++){const j=assignment[p];if(j>=0)assigned[j].push({person:people[p],metrics:mm[p][cfgs[j].skill]});}
   let grandFinal=0,grandPasses=0,grandCount=0; const cache=new Array(NUM_TRIALS);
   for(let j=0;j<NUM_TRIALS;j++){
-    const list=assigned[j]; list.sort((a,b)=>a.person.name.localeCompare(b.name,'zh-Hans-CN'));
+    // 试炼内人员列表按「该试炼技能等级」降序（同等级按角色名，保证结果稳定）
+    const list=assigned[j]; list.sort((a,b)=> (b.metrics.baseLevel - a.metrics.baseLevel) || a.person.name.localeCompare(b.person.name,'zh-Hans-CN'));
     const passes=computePasses(list.map(e=>e.metrics));
     const fLv=START_LV+LV_PER_PASS*passes;
     grandFinal+=fLv; grandPasses+=passes; grandCount+=list.length;
@@ -1926,6 +1971,7 @@ function renderAll() {
   applyTrialCaps();
   renderTableHeader();
   renderTrialCards();
+  renderUnassignedPanel();
   renderGuildInputs();
   renderMemberTable();
   renderSummary();
@@ -1993,7 +2039,7 @@ function renderTrialCards() {
     if (state.result && state.result.cache[j]) {
       const c = state.result.cache[j];
       memberListHtml = c.list.map(e => {
-        const lv = e.person.levels[cfg.skill];
+        const lv = Number(e.metrics && e.metrics.baseLevel != null ? e.metrics.baseLevel : e.person.levels[cfg.skill]) || 0;
         return '<div class="trial-member-item"><span class="ml">'+escHtml(e.person.name)+'</span><span class="mr">Lv'+lv+'</span></div>';
       }).join('');
       const rateStr = c.rateAtFinal.toFixed(1);
@@ -2010,6 +2056,37 @@ function renderTrialCards() {
       resultHtml+
     '</div>';
   }).join('');
+}
+
+// === 未分配成员面板（计算后展示）===
+// 样式与试炼卡片里的成员列表（.trial-member-list）保持一致：逐行名字，不列等级、不给原因、不加说明文字。
+// 位置：作为试炼卡片行的第 5 块窄列（#trial-cards 的最后一个网格项）；
+// 没有未分配成员时整块不渲染，卡片恢复等宽。renderTrialCards 会重写容器 innerHTML，
+// 所以这里每次都新建节点并 append，保证它始终排在 4 张卡片之后。
+function renderUnassignedPanel() {
+  const wrap = document.getElementById('trial-cards');
+  if (!wrap) return;
+  const old = document.getElementById('unassigned-panel');
+  if (old) old.remove();
+  const r = state.result;
+  const list = (r && Array.isArray(r.unassigned)) ? r.unassigned.slice() : [];
+  const show = list.length > 0;
+  wrap.classList.toggle('has-unassigned', show);
+  if (!show) return;
+  list.sort(function(a, b){
+    return String(a.name || '').localeCompare(String(b.name || ''), 'zh-Hans-CN');
+  });
+  const el = document.createElement('div');
+  el.className = 'unassigned-panel';
+  el.id = 'unassigned-panel';
+  const rows = list.map(function(p){
+    return '<div class="trial-member-item"><span class="ml">'+escHtml(p.name || '-')+'</span></div>';
+  }).join('');
+  el.innerHTML = '<div class="unassigned-head">'
+    + '<span class="unassigned-title">'+escHtml(t('unassignedTitle'))+' <span class="unassigned-num">'+list.length+'</span> '+escHtml(t('people'))+'</span>'
+    + '</div>'
+    + '<div class="trial-member-list">'+rows+'</div>';
+  wrap.appendChild(el);
 }
 
 function shrineDefsList() {
@@ -2302,6 +2379,7 @@ function renderSummary() {
 
 function renderAssignmentResults() {
   renderTrialCards();
+  renderUnassignedPanel();
   renderMemberTable();
   renderSummary();
 }
@@ -2410,7 +2488,7 @@ function updateGuildBuilding(key, val) {
   // 建筑等级是公会全局，随共享数据一起上传
   saveData();
   applyTrialCaps();
-  if (state.members && state.members.length > 0 && state.result) calculate(); else { renderTrialCards(); renderMemberTable(); renderSummary(); }
+  if (state.members && state.members.length > 0 && state.result) calculate(); else { renderTrialCards(); renderUnassignedPanel(); renderMemberTable(); renderSummary(); }
   syncGuildInputs();
 }
 
@@ -2482,7 +2560,9 @@ function selectTrialSkill(trialIdx, skillIdx) {
   state.trials[trialIdx].skill = skillIdx;
   state.trials[trialIdx]._ts = Date.now();
   closeSkillPicker();
-  renderTrialCards();
+  // 换了技能 → 已有分配结果作废，直接重算（否则成员列表/未分配名单会停留在旧技能上）
+  if (state.result && state.members.length > 0) calculate();
+  else { renderTrialCards(); renderUnassignedPanel(); }
   saveData();
 }
 
@@ -2893,19 +2973,20 @@ function restoreMemberDump(m) {
   return out;
 }
 
-// 用「计算器备份」整体还原状态。返回 null 表示这份数据不是备份。
+// 用「计算器备份」还原状态。返回 null 表示这份数据不是备份。
+// 成员同样按角色名「合并」（不整体替换）：备份里有的 → 更新/新增；本地独有 → 原样保留。
+// 这样既能把备份导回来，也不会因为备份里某人的字段是空的就把本地配置清空。
 function importCalculatorDump(dump) {
   const src = (dump && dump.payload && typeof dump.payload === 'object') ? dump.payload : dump;
   const rawMembers = (src && Array.isArray(src.members)) ? src.members : null;
   if (!rawMembers) return null;
   // 公会名只在本地还没有时采用 —— 避免导入别人的备份时把当前共享空间的公会名改掉
   if (src.guild && !state.guild) state.guild = String(src.guild);
-  state.members = rawMembers.map(restoreMemberDump);
-  state.members.forEach(function(m, i){ m.id = i; });
+  const stat = mergeMembersByList(rawMembers.map(restoreMemberDump));
   if (Array.isArray(src.trials) && src.trials.length) {
     state.trials = src.trials.map(function(x){ return Object.assign({}, x); });
   }
-  state.deletedIds = Array.isArray(src.deletedIds) ? src.deletedIds.slice() : [];
+  state.deletedIds = [];   // 名单只增不减 → 旧墓碑（按 id）已无意义，留着反而会误删刚合并进来的成员
   if (src.guildBuildings && typeof src.guildBuildings === 'object') {
     const next = guildBuildingAllKeys().reduce(function(o,k){ o[k]=0; return o; }, {});
     for (const k of Object.keys(next)) {
@@ -2918,7 +2999,7 @@ function importCalculatorDump(dump) {
   }
   applyTrialCaps();
   state.members.forEach(normalizeMemberEquip);
-  return { count: state.members.length };
+  return { count: state.members.length, stat: stat };
 }
 
 // 导入后落盘：共享模式下立即全量覆盖 bin（不走合并，防止被旧数据覆盖），否则只写本地。
@@ -2932,14 +3013,15 @@ async function persistAfterImport() {
   }
 }
 
-// === 合并导入（游戏成员 profile 数组）===
+// === 合并导入（游戏成员 profile 数组 / 计算器备份）===
 // 旧行为是「整体替换 state.members」，会把成员手动补的数据一把冲掉 —— 尤其是游戏导出
 // 根本不包含的「装备拥有集合」（profile_shared 只有当前穿戴的 24 件，没有背包）。
-// 现在按角色名合并：
-//   · 同名成员 → 游戏权威字段（等级 / 配装槽 / 神龛 / 房屋 / 成就 / 原始 dict）用采集值更新；
-//                装备拥有集合取并集 —— 手动勾的保留，采集到的新穿戴装备补进来。
+// 现在按角色名「并集合并」（两种导入都走 mergeMembersByList）：
+//   · 同名成员 → 逐字段合并：技能等级取较大值、个人神龛 / 房屋取非 0 值、成就取并集、
+//                配装槽逐槽位非空才覆盖、装备拥有集合取并集 —— 空字段一律不覆盖本地。
 //   · 采集里没有的名字 → 作为新成员追加。
 //   · 本地有、采集里没有的成员（手动加的人 / 已退会的人）→ 原样保留，一个都不删。
+// 也就是说：导入一份「空配置」只会补进空数据，绝不会把已配置好的成员刷空。
 
 // 拥有集合并集：本地已有同家族的（普通款与 ★ 精炼款在游戏里互斥，只认一个）一律保留本地；
 // 其余用采集值补进来并夹取强化范围。
@@ -2961,50 +3043,138 @@ function mergeOwnedEquip(local, remote) {
   return out;
 }
 
-// 用一条新采集的 profile 更新已有成员（就地修改并返回 old）
+// 值为「空」：新导入数据里这种值一律不覆盖本地已有配置（这正是「导入空配置把本地刷空」的根因）
+function isBlankValue(v) {
+  if (v === undefined || v === null || v === '') return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v).length === 0;
+  return false;
+}
+
+// 技能等级：逐项取较大值。游戏里技能等级只增不减，且空配置里的 0 不能把本地等级刷成 0。
+function mergeSkillLevels(local, fresh) {
+  return SKILL_KEYS.map(function(_, i){
+    const a = Math.max(0, Math.floor(Number((local || [])[i]) || 0));
+    const b = Math.max(0, Math.floor(Number((fresh || [])[i]) || 0));
+    return Math.max(a, b);
+  });
+}
+
+// 配装槽（一槽一件）：新数据里该槽位没有装备 → 保留本地那件；有 → 用新值。
+function mergeEquipSlots(local, fresh) {
+  const out = {};
+  for (const slot of Object.keys(local || {})) {
+    const e = local[slot];
+    if (e && e.iconId) out[slot] = { iconId: e.iconId, enhance: clampEnhance(e.enhance) };
+  }
+  for (const slot of Object.keys(fresh || {})) {
+    const e = fresh[slot];
+    if (!e || !e.iconId) continue;
+    out[slot] = { iconId: e.iconId, enhance: clampEnhance(e.enhance) };
+  }
+  return out;
+}
+
+// 数值型字典（个人神龛 / 房屋房间）：新值为 0 或缺失 → 保留本地；非 0 → 以新值为准。
+function mergeLevelDict(local, fresh) {
+  const out = {};
+  for (const k of Object.keys(local || {})) out[k] = Math.max(0, Math.floor(Number(local[k]) || 0));
+  for (const k of Object.keys(fresh || {})) {
+    const v = Math.max(0, Math.floor(Number(fresh[k]) || 0));
+    if (v > 0 || out[k] === undefined) out[k] = v;
+  }
+  return out;
+}
+
+// 布尔型字典（成就档位）：成就是永久达成 → 取并集（本地勾过的一律保留）。
+function mergeFlagDict(local, fresh) {
+  const out = {};
+  for (const k of Object.keys(local || {})) out[k] = !!local[k];
+  for (const k of Object.keys(fresh || {})) out[k] = !!(out[k] || fresh[k]);
+  return out;
+}
+
+// 一条新数据合并进已有成员（就地修改并返回 old）—— 全部字段按「并集 / 非空覆盖」处理：
+//   · 技能等级 / 个人神龛 / 房屋 / 成就 / 拥有集合 → 合并（空值不覆盖）
+//   · 配装槽 → 逐槽位非空才覆盖
+//   · 其余原始 profile 字段（成就 buff、房屋 buff 等）→ 新值非空才覆盖
+// 这样「导入一份空配置」只会补进空数据，绝不会把本地已有配置清空。
 function mergeMemberFresh(old, fresh) {
-  const owned = mergeOwnedEquip(old.ownedEquip, fresh.ownedEquip);
-  Object.assign(old, fresh);   // 游戏权威字段整体覆盖（fresh 里没有 id / _ts，不受影响）
-  old.ownedEquip = owned;      // 拥有集合 = 并集（手动补的不能丢）
+  const levels = mergeSkillLevels(old.levels, fresh.levels);
+  const equipment = mergeEquipSlots(old.equipment, fresh.equipment);
+  const ownedEquip = mergeOwnedEquip(old.ownedEquip, fresh.ownedEquip);
+  const shrines = mergeLevelDict(old.shrines, fresh.shrines);
+  const houseRooms = mergeLevelDict(old.houseRooms, fresh.houseRooms);
+  const achievements = mergeFlagDict(old.achievements, fresh.achievements);
+  for (const k of Object.keys(fresh || {})) {
+    if (k === 'id' || k === '_ts') continue;
+    if (k === 'levels' || k === 'equipment' || k === 'ownedEquip' || k === 'shrines'
+        || k === 'houseRooms' || k === 'achievements') continue;
+    if (k === 'name') { if (fresh.name) old.name = String(fresh.name); continue; }
+    if (isBlankValue(fresh[k])) continue;   // 空字段不覆盖
+    old[k] = fresh[k];
+  }
+  old.levels = levels;
+  old.equipment = equipment;
+  old.ownedEquip = ownedEquip;
+  old.shrines = shrines;
+  old.houseRooms = houseRooms;
+  old.achievements = achievements;
   old._ts = Date.now();
   return old;
 }
 
-// 把采集到的 profile 数组合并进当前名单，返回统计 { updated, added, kept }；无有效成员时返回 null。
-function mergeMembersFromProfiles(profiles) {
-  if (!Array.isArray(profiles)) profiles = [profiles];
+// 把一批「已归一化的新成员」按角色名合并进当前名单（并集语义：只增不删、字段取并集）。
+// 返回 { updated, added, kept, updatedNames, addedNames, keptNames }。
+function mergeMembersByList(freshList) {
+  const before = state.members.slice();
   const byName = {};
-  for (const m of state.members) {
+  for (const m of before) {
     const k = String(m.name || '').trim();
     if (k && byName[k] === undefined) byName[k] = m;
   }
+  let nextId = 0;
+  for (const m of before) nextId = Math.max(nextId, (Number(m.id) || 0) + 1);
   const usedIds = {};
   const seen = {};
-  const added = [];
-  let updated = 0;
-  let nextId = 0;
-  for (const m of state.members) nextId = Math.max(nextId, (Number(m.id) || 0) + 1);
-  for (const profile of profiles) {
-    const fresh = parseMemberFromProfile(profile);
+  const addedNames = [];
+  const updatedNames = [];
+  for (const fresh of freshList) {
     if (!fresh) continue;
     const k = String(fresh.name || '').trim();
-    if (seen[k]) continue;               // 采集数据里同一个人出现多次 → 只取第一条
-    seen[k] = true;
+    if (k && seen[k]) continue;          // 同一批数据里同一个人出现多次 → 只取第一条
+    if (k) seen[k] = true;
     const old = k ? byName[k] : undefined;
     if (old && !usedIds[old.id]) {
-      mergeMemberFresh(old, fresh);      // 已存在 → 更新（并保留手动补的拥有集合）
+      mergeMemberFresh(old, fresh);      // 已存在 → 更新（并保留本地手动补的数据）
       usedIds[old.id] = true;
-      updated++;
+      updatedNames.push(String(old.name || ''));
     } else {
       fresh.id = nextId++;
       fresh._ts = Date.now();
-      added.push(fresh);                 // 新成员 → 追加
+      state.members.push(fresh);         // 新成员 → 追加
+      addedNames.push(String(fresh.name || ''));
     }
   }
-  if (!updated && !added.length) return null;
-  const kept = state.members.filter(function(m){ return !usedIds[m.id]; }).length;
-  state.members = state.members.concat(added);
-  return { updated: updated, added: added.length, kept: kept };
+  const keptNames = before.filter(function(m){ return !usedIds[m.id]; }).map(function(m){ return String(m.name || ''); });
+  return {
+    updated: updatedNames.length, added: addedNames.length, kept: keptNames.length,
+    updatedNames: updatedNames, addedNames: addedNames, keptNames: keptNames,
+  };
+}
+
+// 把采集到的 profile 数组合并进当前名单，返回统计；无有效成员时返回 null。
+function mergeMembersFromProfiles(profiles) {
+  if (!Array.isArray(profiles)) profiles = [profiles];
+  const fresh = [];
+  for (const profile of profiles) {
+    const one = parseMemberFromProfile(profile);
+    if (one) fresh.push(one);
+  }
+  if (!fresh.length) return null;
+  const stat = mergeMembersByList(fresh);
+  if (!stat.updated && !stat.added) return null;
+  return stat;
 }
 
 function importJson() {
@@ -3018,14 +3188,14 @@ function importJson() {
       try { parsed = JSON.parse(reader.result); }
       catch(e) { alert('JSON parse error: ' + e.message); return; }
 
-      // ① 本计算器导出的完整备份 → 整体还原（成员 / 试炼 / 公会建筑 / 公会名）
+      // ① 本计算器导出的备份 → 还原试炼 / 公会建筑 / 公会名；成员按角色名并集合并
       if (isCalculatorDump(parsed)) {
         const res = importCalculatorDump(parsed);
         if (!res) { alert(t('importFailed')); return; }
         await persistAfterImport();
         renderAll();
         if (state.members.length > 0) calculate();
-        alert(t('importSuccess')+': '+res.count);
+        showImportReport(res.stat);
         return;
       }
 
@@ -3039,11 +3209,86 @@ function importJson() {
       await persistAfterImport();
       renderAll();
       if (state.members.length > 0) calculate();
-      alert(tplFill(t('importMergeReport'), { upd: stat.updated, add: stat.added, keep: stat.kept }));
+      showImportReport(stat);
     };
     reader.readAsText(file, 'UTF-8');
   };
   input.click();
+}
+
+// === 导入结果报告（更新 / 新增 / 保留，各一行；更新只报数量，新增与保留列出名字）===
+// 「保留」名单里的名字可以删除：悬停变删除按钮 → 点一下变「确认删除?」→ 再点一下才真删（就地从报告与数据里移除）。
+let importReportStat = null;   // { updated, added }（删除不改变这两项）
+let importReportKept = [];     // 当前报告里的「保留」名单（可删除）
+
+function irNameChip(name, deletable) {
+  if (!deletable) return '<span class="ir-name">'+escHtml(name || '-')+'</span>';
+  return '<span class="ir-name ir-del" data-name="'+escHtml(name || '')+'"'
+    + ' onclick="irDelClick(this)" onmouseleave="irDelLeave(this)">'+escHtml(name || '-')+'</span>';
+}
+function importReportRowHtml(label, names, count, deletable) {
+  const none = escHtml(t('importRepNone'));
+  let listHtml = '';
+  if (names !== null) {   // null = 该行不列名字（更新行只报数量）
+    listHtml = '<div class="ir-names">'+((names && names.length)
+      ? names.map(function(n){ return irNameChip(n, deletable); }).join('')
+      : '<span class="ir-none">'+none+'</span>')+'</div>';
+  }
+  return '<div class="ir-row">'
+    + '<div class="ir-head"><span class="ir-label">'+escHtml(label)+'</span>'
+    + '<span class="ir-count">'+count+' '+escHtml(t('people'))+'</span></div>'
+    + listHtml
+    + '</div>';
+}
+function renderImportReport() {
+  const body = document.getElementById('import-report-body');
+  if (!body || !importReportStat) return;
+  body.innerHTML = ''
+    + importReportRowHtml(t('importRepUpdated'), null, importReportStat.updated, false)
+    + importReportRowHtml(t('importRepAdded'), importReportStat.addedNames, importReportStat.added, false)
+    + importReportRowHtml(t('importRepKept'), importReportKept, importReportKept.length, true);
+}
+function showImportReport(stat) {
+  if (!stat) return;
+  importReportStat = { updated: stat.updated, added: stat.added, addedNames: stat.addedNames || [] };
+  importReportKept = (stat.keptNames || []).slice();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'import-report-overlay';
+  overlay.onclick = function(e){ if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = '<div class="modal-dialog" style="max-width:640px">'
+    + '<div class="modal-title"><span>'+escHtml(t('importRepTitle'))+'</span>'
+    + '<button class="modal-close" onclick="document.getElementById(\'import-report-overlay\').remove()">&times;</button></div>'
+    + '<div class="import-report" id="import-report-body"></div>'
+    + '<div class="modal-actions"><button class="btn btn-primary" onclick="document.getElementById(\'import-report-overlay\').remove()">'+escHtml(t('confirm'))+'</button></div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  renderImportReport();
+}
+// 「保留」名单删除交互：点一下 → 确认态；再点一下 → 真删。鼠标移开则取消确认态。
+function irDelClick(el) {
+  if (el.classList.contains('is-confirm')) { deleteKeptMemberFromReport(el); return; }
+  el.classList.add('is-confirm');
+  el.textContent = t('importDelConfirm');
+}
+function irDelLeave(el) {
+  if (el.classList.contains('is-confirm')) {
+    el.classList.remove('is-confirm');
+    el.textContent = el.dataset.name || '-';
+  }
+}
+async function deleteKeptMemberFromReport(el) {
+  const name = el.dataset.name || '';
+  const idx = state.members.findIndex(function(m){ return String(m.name || '').trim() === String(name).trim(); });
+  if (idx < 0) { el.remove(); return; }
+  const m = state.members[idx];
+  state.members.splice(idx, 1);
+  if (Array.isArray(state.deletedIds) && !state.deletedIds.includes(m.id)) state.deletedIds.push(m.id);
+  importReportKept = importReportKept.filter(function(n){ return String(n).trim() !== String(name).trim(); });
+  await persistAfterImport();          // 共享模式下立即全量覆盖 bin
+  if (state.members.length > 0) calculate();   // 名单变了 → 后台重算并刷新表格 / 未分配面板
+  else { renderAll(); }
+  renderImportReport();                // 就地刷新报告（数量与名单）
 }
 
 // 导出数据里若带公会建筑等级（/guild_buildings/* 键 = 建筑 hrid），自动预填到 state.guildBuildings
