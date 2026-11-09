@@ -119,13 +119,25 @@ h2 { font-size:16px; margin:10px 0 8px; color:var(--text-muted); }
 .trial-member-item .ml { color:var(--text-muted); }
 .trial-member-item .mr { color:var(--text-faint); }
 .trial-result { font-size:11px; font-weight:600; color:var(--accent); padding-top:4px; border-top:1px solid var(--list-border); line-height:1.5; }
+/* 逐阶段时间表（100 → 当前最终等级，每 10 级一行）：表头固定在外，只有行列表滚动 */
+.trial-stages { border-top:1px dashed var(--list-border); padding-top:4px; font-size:11px; }
+.tstage-body { max-height:104px; overflow-y:auto; }
+.tstage { display:flex; align-items:center; gap:6px; padding:1px 2px; border-radius:3px; color:var(--text-muted); }
+.tstage-body .tstage:nth-child(even) { background:var(--list-bg); }
+.tstage-lv { flex:none; width:46px; font-weight:600; color:var(--text); }
+.tstage-t { flex:1 1 0; min-width:0; white-space:nowrap; color:var(--text-muted); }
+.tstage.is-over { opacity:.5; }
+.tstage-head { color:var(--text-faint); font-size:10px; padding-bottom:2px; border-bottom:1px solid var(--list-border); margin-bottom:2px; }
+.tstage-head .tstage-lv { color:var(--text-faint); font-weight:600; }
+.tstage-head .tstage-t { color:var(--text-faint); }
 
 /* 未分配成员（与试炼卡同排的窄块；名单样式与试炼卡里的成员列表一致） */
 .unassigned-panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
 .unassigned-head { display:flex; flex-direction:column; gap:2px; }
 .unassigned-title { font-size:14px; font-weight:600; color:var(--text); }
 .unassigned-title .unassigned-num { color:var(--danger); }
-.unassigned-panel .trial-member-list { flex:1; min-height:60px; max-height:none; }
+/* 未分配成员：名单固定高度内滚动（人多时不再把整块拉得超长） */
+.unassigned-panel .trial-member-list { flex:1 1 auto; min-height:60px; max-height:340px; overflow-y:auto; }
 
 /* Member Table */
 .member-section { padding:10px 20px; }
@@ -160,6 +172,28 @@ table.member-table td.mainhand-cell { text-align:center; }
 .mini-equip.is-empty { color:var(--text-faint); font-size:12px; }
 /* 成员详情弹窗正文（专业 / 装备 / 房屋 / 神龛 / 成就，按分组网格排布） */
 .detail-body { overflow-y:auto; min-height:0; }
+/* 详情弹窗标签页（个人资料 / 生活属性）：吸顶，滚动长内容时仍可切换 */
+.detail-tabs { position:sticky; top:0; z-index:2; display:flex; gap:2px; background:var(--modal-bg); border-bottom:1px solid var(--border); }
+.detail-tab { padding:6px 14px; font-size:12px; font-weight:600; color:var(--text-muted); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; }
+.detail-tab:hover { color:var(--text); }
+.detail-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+/* 生活属性表：10 个生活技能 × 等级 / 成功率 / 工作能力 / 单次速度 / 双倍概率 */
+.life-stats-bar { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px; color:var(--text-muted); }
+.life-stats-bar input { width:64px; text-align:center; padding:2px 4px; border:1px solid var(--border); background:var(--input-bg); border-radius:4px; color:var(--text); font-size:12px; }
+.life-stats { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+.life-stats th { font-size:11px; font-weight:600; color:var(--text-muted); text-align:right; padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap; cursor:help; }
+.life-stats th:first-child, .life-stats td:first-child { text-align:left; }
+.life-stats td { padding:5px 8px; text-align:right; border-bottom:1px solid var(--list-border); color:var(--text); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.life-stats tbody tr:last-child td { border-bottom:none; }
+.life-stats tbody tr:hover { background:var(--list-bg); }
+.life-stats .ls-skill { display:inline-flex; align-items:center; gap:6px; }
+.life-stats .ls-skill svg { width:18px; height:18px; flex:none; background:var(--icon-tile); border-radius:4px; }
+/* 详情「个人资料」页的专业等级图标：与试炼卡 / 成员表同一套底色，纯白图标才看得清 */
+.detail-grid.skill-grid .detail-item svg { background:var(--icon-tile); border-radius:4px; }
+.life-stats .ls-main { font-weight:600; }
+.life-stats .ls-sub { display:block; font-size:10px; font-weight:400; color:var(--text-faint); line-height:1.2; }
+.life-stats tr.is-zero td { color:var(--text-faint); }
+.life-stats tr.is-zero .ls-main { font-weight:400; }
 .detail-section { border-top:1px solid var(--border); padding-top:8px; }
 .detail-section:first-child { border-top:none; padding-top:0; }
 .detail-section-title { font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; cursor:help; }
@@ -794,7 +828,7 @@ table.member-table td.assign-cell svg { width:22px; height:22px; background:var(
   </div>
   <div class="header-right">
     <button class="btn btn-icon" id="btn-lang" onclick="toggleLang()">中/EN</button>
-    <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()">🌙</button>
+    <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()" title="切换深色 / 浅色主题">🌙</button>
     <button class="btn" id="btn-refresh" onclick="refreshFromServer()" style="display:none">🔄</button>
     <button class="btn" id="btn-share" onclick="openShareDialog()">共享设置</button>
     <button class="btn" id="btn-import-json" onclick="importJson()">导入</button>
@@ -885,7 +919,10 @@ const I18N = {
     importRepNone:'（无）',
     importDelConfirm:'确认删除?',
     teamWork:'团队工作能力', nextClearNeeds:'下1次还需', pts:'点', perSec:'点/秒',
-    trial:'试炼', language:'中/EN', theme:'🌙',
+    reach:'到达', tokens:'代币', currentLevelNeeds:'当前等级所需分数', cumulativePts:'累计分数',
+    finalRatio:'最终比例', targetLevel:'通关目标', cumulativeTime:'累计', singlePassTime:'单关',
+    stageLevel:'阶段',
+    trial:'试炼', language:'中/EN', themeTip:'切换深色 / 浅色主题',
     globalBuffs:'全局加成',
     globalBuffsTip:'手动输入你所在服务器/账号的社区大厅全局 buff 等级：0 = 无 buff，1~20 级启用。加成 = 19.5 + 等级×0.5（%），仅本地保存，每个玩家按自己实际情况填。',
     guildBuildings:'公会建筑', guildBuildingsTip:'对齐游戏 23 座建筑（上限 20 级），仅在本公会试炼期间生效。生活类/战斗类建筑为对应技能提供 +2 有效等级；功能建筑不影响试炼层数。建筑等级为公会全局，会随共享数据一起上传。',
@@ -903,6 +940,26 @@ const I18N = {
     memberDetailTip:'成员的「专业等级 / 装备 / 房屋 / 神龛 / 成就」等全部个人数据都在详情弹窗里编辑（点该行「详情」按钮），随共享数据一起上传；不影响试炼推演的项显示为灰色。',
     detailSkillSec:'专业等级', detailEquipSec:'装备', detailShrineSec:'神龛', detailAchSec:'成就完成', detailHouseSec:'房屋',
     detailShrineSkillingRow:'生活类', detailShrineCombatRow:'战斗类',
+    detailTabProfile:'个人资料', detailTabStats:'生活属性',
+    lsSkill:'技能', lsLevel:'等级', lsSuccess:'成功率', lsWork:'工作能力', lsSpeed:'单次速度', lsDouble:'双倍概率',
+    // 悬停说明：分行结构与来源分解对齐 Chen19970809/MWI_Trial_Calculator；
+    // 来源列表只列「有可能影响该指标」的来源（见 srcAllowed），不可能影响的不出现，避免 0% 噪声。
+    lsLevelTip:'基础等级 {base}（成员技能等级）\n+ 公会建筑等级加成 {building}\n= 有效等级 {eff}',
+    lsLevelAboveTarget:'等级高于目标', lsLevelBelowTarget:'等级低于目标',
+    lsSuccessTip:'等级差 = 有效等级 {effLv} − 目标等级 {targetLv} = {delta}（{cmp}，每级 {adjPct}%）\n等级成功率加成 = {delta} × {adjPct}% = {levelAdj}%\n基础成功率 = {basePct}%\n强化成功率加成 = {successBonus}%（{srcList}）\n最终成功率 = {basePct}% × (1 + {levelAdj}% + {successBonus}%) = {rawPct}% → 限制后 {pct}%',
+    lsSuccessTipPlain:'等级差 = 有效等级 {effLv} − 目标等级 {targetLv} = {delta}（{cmp}，每级 {adjPct}%）\n等级成功率加成 = {delta} × {adjPct}% = {levelAdj}%\n基础成功率 = {basePct}%\n最终成功率 = {basePct}% × (1 + {levelAdj}%) = {rawPct}% → 限制后 {pct}%',
+    srcEquip:'装备', srcAchievement:'成就', srcHouse:'房屋', srcGlobal:'全局', srcBuilding:'建筑',
+    srcShrineForce:'神龛·力量', srcShrineTempo:'神龛·节奏',
+    lsWorkTip:'有效等级 {effLv} × (1 + 效率加成 {efficiencyBonus}%)\n= {effLv} × {effMult} = {raw}\n向下取整 = {workP}\n效率加成来源：{srcList}',
+    lsSpeedTip:'单次速度 = 基础时间 {baseSec} 秒 ÷ (1 + 速度加成 {speedBonus}%)\n= {baseSec} ÷ {speedMult} = {actionSeconds} 秒\n速度加成来源：{srcList}',
+    lsDoubleTip:'双倍概率 = {gatheringBonus}%（{srcList}）\n限制在 0% ~ 100% 之间 = {pct}%',
+    lsNoLevel:'该技能尚未填写等级',
+    lsTargetLabel:'目标等级', lsTargetTip:'成功率按该目标等级计算（10 级为最小调整单位），只影响本页展示，不改变试炼推演',
+    lsLevelFormula:'有效等级 = 基础等级 + 公会建筑等级加成',
+    lsSuccessFormula:'成功率 = 80% 基础 ×（1 + 等级差调整），限制在 5%~100%；成功率加成只对「强化」技能生效',
+    lsWorkFormula:'工作能力 = ⌊有效等级 ×（1 + 效率加成）⌋',
+    lsSpeedFormula:'单次速度 = 基础 10 秒 ÷（1 + 速度加成）',
+    lsDoubleFormula:'双倍概率 = 采集 / 美食加成合计（上限 100%），触发时该次产出翻倍',
     detailSkillTip:'专业等级属于「个人持久化数据」：逐成员填写，随共享数据一起上传。',
     detailEquipTip:'装备分三区：生活装备（只加生活技能加成）、生活 · 战斗两用、战斗装备 / 生活工具。点方格设置强化等级与 ★ 精炼。',
     lifeEquipSec:'生活装备',
@@ -961,7 +1018,10 @@ const I18N = {
     importRepNone:'(none)',
     importDelConfirm:'Delete?',
     teamWork:'Team Work', nextClearNeeds:'Next clear needs', pts:'pts', perSec:'pts/s',
-    trial:'Trial', language:'中/EN', theme:'☀️',
+    reach:'Reach', tokens:'Tokens', currentLevelNeeds:'Current level needs', cumulativePts:'Cumulative score',
+    finalRatio:'Final ratio', targetLevel:'Clear Target', cumulativeTime:'Total', singlePassTime:'This pass',
+    stageLevel:'Stage',
+    trial:'Trial', language:'中/EN', themeTip:'Toggle dark / light theme',
     globalBuffs:'Global Buffs',
     globalBuffsTip:'Enter your server/account community-hall global buff level: 0 = none, 1~20 = active. Bonus = 19.5 + level×0.5 (%), stored locally only.',
     guildBuildings:'Guild Buildings', guildBuildingsTip:'Aligned with the 23 in-game buildings (max 20), active only during your own guild trials. Life/combat buildings give the matching skill +2 effective levels; utility buildings do not affect trial tiers. Building levels are guild-wide and are uploaded with the shared data.',
@@ -979,6 +1039,24 @@ const I18N = {
     memberDetailTip:'All per-member personal data — skill levels, equipment, house rooms, shrines and achievements — is edited in the detail dialog (click Details on the row) and uploads with the shared data. Items that do not affect trials are dimmed.',
     detailSkillSec:'Skill Levels', detailEquipSec:'Equipment', detailShrineSec:'Shrines', detailAchSec:'Achievements', detailHouseSec:'House rooms',
     detailShrineSkillingRow:'Skilling', detailShrineCombatRow:'Combat',
+    detailTabProfile:'Profile', detailTabStats:'Life Stats',
+    lsSkill:'Skill', lsLevel:'Level', lsSuccess:'Success', lsWork:'Work Power', lsSpeed:'Action Time', lsDouble:'Double Chance',
+    lsLevelTip:'Base level {base} (member skill level)\n+ Guild building level bonus {building}\n= Effective level {eff}',
+    lsLevelAboveTarget:'level above target', lsLevelBelowTarget:'level below target',
+    lsSuccessTip:'Level delta = effective level {effLv} − target level {targetLv} = {delta} ({cmp}, {adjPct}% per level)\nLevel success bonus = {delta} × {adjPct}% = {levelAdj}%\nBase success rate = {basePct}%\nEnhancing success bonus = {successBonus}% ({srcList})\nFinal success rate = {basePct}% × (1 + {levelAdj}% + {successBonus}%) = {rawPct}% → capped {pct}%',
+    lsSuccessTipPlain:'Level delta = effective level {effLv} − target level {targetLv} = {delta} ({cmp}, {adjPct}% per level)\nLevel success bonus = {delta} × {adjPct}% = {levelAdj}%\nBase success rate = {basePct}%\nFinal success rate = {basePct}% × (1 + {levelAdj}%) = {rawPct}% → capped {pct}%',
+    srcEquip:'equipment', srcAchievement:'achievement', srcHouse:'house', srcGlobal:'global', srcBuilding:'building',
+    srcShrineForce:'shrine·Force', srcShrineTempo:'shrine·Tempo',
+    lsWorkTip:'Effective level {effLv} × (1 + efficiency bonus {efficiencyBonus}%)\n= {effLv} × {effMult} = {raw}\nfloor = {workP}\nEfficiency sources: {srcList}',
+    lsSpeedTip:'Action time = base {baseSec}s ÷ (1 + speed bonus {speedBonus}%)\n= {baseSec} ÷ {speedMult} = {actionSeconds}s\nSpeed sources: {srcList}',
+    lsDoubleTip:'Double chance = {gatheringBonus}% ({srcList})\nClamped to 0% ~ 100% = {pct}%',
+    lsNoLevel:'No level entered for this skill',
+    lsTargetLabel:'Target level', lsTargetTip:'Success rates are computed against this target level (steps of 10); display only, the trial simulation is not affected',
+    lsLevelFormula:'Effective level = base + guild building level bonus',
+    lsSuccessFormula:'Success = 80% base × (1 + level difference), clamped to 5%–100%; success bonuses only apply to the enhancing skill',
+    lsWorkFormula:'Work power = ⌊effective level × (1 + efficiency bonus)⌋',
+    lsSpeedFormula:'Action time = 10s base ÷ (1 + speed bonus)',
+    lsDoubleFormula:'Double chance = gathering / gourmet bonus (max 100%); the action then yields twice the items',
     detailSkillTip:'Skill levels are per-member persistent data: fill them per member; they upload with the shared data.',
     detailEquipTip:'Three areas: Life gear (skilling bonuses only), Life / Combat hybrid, and Combat gear / Life tools. Click a cell to set the enhancement level and ★ refinement.',
     lifeEquipSec:'Life gear',
@@ -1223,6 +1301,8 @@ function foldStatTotalsForSkill(out, totals, skillId) {
 function foldItemForSkill(out, slot, iconId, enhance, skillId) {
   foldStatTotalsForSkill(out, itemStatTotals(slot, iconId, enhance), skillId);
 }
+// 技能加成对象的 5 个字段（顺序固定，用于逐来源累加与展示）
+const SKILL_BONUS_KEYS = ['speedBonus','efficiencyBonus','successBonus','gatheringBonus','skillLevelBonus'];
 function emptySkillBonus() { return {speedBonus:0,efficiencyBonus:0,successBonus:0,gatheringBonus:0,skillLevelBonus:0}; }
 function cloneSkillBonus(b) { return {speedBonus:b.speedBonus,efficiencyBonus:b.efficiencyBonus,successBonus:b.successBonus,gatheringBonus:b.gatheringBonus,skillLevelBonus:b.skillLevelBonus}; }
 
@@ -1785,24 +1865,49 @@ function successRate(personLv, targetLv, successBonus) {
 function computePersonSkillMetrics(person, skillIdx) {
   const skillId = SKILL_KEYS[skillIdx];
   const baseLevel = Number(person.levels[skillIdx]||0);
+  // 逐来源累加（顺序与历史实现一致，数值不变），同时保留每个来源的增量，供「生活属性」悬停说明展示
   // 装备：生活装备「拥有制」槽位（上衣/下装/披风）按本技能自动择优，其余配装槽按登记的单件
-  const b = computeBonusForSkill(person, skillId, baseLevel);
+  const equipB = computeBonusForSkill(person, skillId, baseLevel);
   // 手动输入的全局 buff：按技能分类叠加相应比例
-  addGlobalBuffsToCombined(b, skillId);
+  const globalB = emptySkillBonus();
+  addGlobalBuffsToCombined(globalB, skillId);
   // 逐人加成：成就档 buff、房屋房间 buff（依赖导入 profile 中的对应字段）
   const achB = extractAchievementBonuses(person, skillId);
-  b.speedBonus += achB.speedBonus; b.efficiencyBonus += achB.efficiencyBonus; b.successBonus += achB.successBonus; b.gatheringBonus += achB.gatheringBonus; b.skillLevelBonus += achB.skillLevelBonus;
   const houseB = extractHouseBuffBonuses(person, skillId);
-  b.speedBonus += houseB.speedBonus; b.efficiencyBonus += houseB.efficiencyBonus; b.successBonus += houseB.successBonus; b.gatheringBonus += houseB.gatheringBonus; b.skillLevelBonus += houseB.skillLevelBonus;
-  // 公会建筑（有效等级）/ 公会神龛（效率/速度），本地输入项
-  applyGuildBuilding(b, skillId);
-  applyGuildShrine(b, person);
+  const b = cloneSkillBonus(equipB);
+  for (const k of SKILL_BONUS_KEYS) b[k] += (globalB[k] || 0) + (achB[k] || 0) + (houseB[k] || 0);
+  // 公会建筑（有效等级）/ 公会神龛（效率/速度），本地输入项；两个函数内部累加并返回各自增量
+  const buildingB = applyGuildBuilding(b, skillId);
+  const shrineB = applyGuildShrine(b, person);
+  // 有效等级口径与游戏一致：**只有公会建筑提供生活技能等级加成**（房屋只给效率/速度等，战斗房屋加的是战斗等级）。
+  // 装备 / 成就 / 全局 buff / 房屋 里的等级加成都不计入有效等级（这里直接覆盖）。
+  const lvBonusTotal = (buildingB.skillLevelBonus || 0);
+  b.skillLevelBonus = lvBonusTotal;
+  // 成功率只由「等级差」决定；成功率加成（装备 / 成就 / 房屋 …）只有「强化」技能吃（即强化成功率）。
+  const appliedSuccessBonus = (skillId === 'enhancing') ? (b.successBonus || 0) : 0;
   const effLevel = Math.max(0, baseLevel + (b.skillLevelBonus||0));
   const actionSeconds = BASE_ACTION_SEC / Math.max(0.05, 1+(b.speedBonus||0));
   const workP = Math.max(0, Math.floor(effLevel * (1+(b.efficiencyBonus||0))));
   let dblP = Math.max(0, Math.min(1, b.gatheringBonus||0));
   const baseRatePerSecond = actionSeconds > 0 ? (workP*(1+dblP))/actionSeconds : 0;
-  return {baseLevel,effLevel,actionSeconds,workP,dblP,baseRatePerSecond,successBonus:b.successBonus||0};
+  // 来源分解：字段与 Chen19970809/MWI_Trial_Calculator 的 sources 一致。
+  // buffServer / buffOther 对应「游戏 buff 的全服 / 其他来源」，本项目没有该聚合数据，恒为 0。
+  const mkSrc = function(eq, bh, a, g, bu, s){
+    const bs = 0, bo = 0;
+    return { equip:eq, buffHouse:bh, buffServer:bs, buffOther:bo, buffTotal:bh+bs+bo,
+             achievement:a, global:g, building:bu, shrine:s, total:eq+bh+bs+bo+a+g+bu+s };
+  };
+  const sources = {
+    skillLevel: mkSrc(equipB.skillLevelBonus, houseB.skillLevelBonus, achB.skillLevelBonus, globalB.skillLevelBonus, buildingB.skillLevelBonus||0, 0),
+    success:    mkSrc(equipB.successBonus, houseB.successBonus, achB.successBonus, globalB.successBonus, 0, shrineB.successBonus||0),
+    efficiency: mkSrc(equipB.efficiencyBonus, houseB.efficiencyBonus, achB.efficiencyBonus, globalB.efficiencyBonus, 0, shrineB.efficiencyBonus||0),
+    speed:      mkSrc(equipB.speedBonus, houseB.speedBonus, achB.speedBonus, globalB.speedBonus, 0, shrineB.speedBonus||0),
+    gathering:  mkSrc(equipB.gatheringBonus, houseB.gatheringBonus, achB.gatheringBonus, globalB.gatheringBonus, 0, shrineB.gatheringBonus||0)
+  };
+  // 只有「公会建筑」计入等级；成功率加成只有强化技能生效 → 覆盖 total 便于悬停说明自洽
+  sources.skillLevel.total = lvBonusTotal;
+  sources.success.total = appliedSuccessBonus;
+  return {baseLevel,effLevel,actionSeconds,workP,dblP,baseRatePerSecond,successBonus:appliedSuccessBonus,speedBonus:b.speedBonus||0,efficiencyBonus:b.efficiencyBonus||0,gatheringBonus:b.gatheringBonus||0,skillLevelBonus:b.skillLevelBonus||0,sources:sources};
 }
 
 function expectedRate(m, T) {
@@ -1810,8 +1915,9 @@ function expectedRate(m, T) {
   return m.baseRatePerSecond * successRate(m.effLevel, T, m.successBonus);
 }
 
-function computePasses(metricsList) {
-  const N = metricsList.length; if (N===0) return 0;
+// 完整模拟：返回 { passes, timeLeft }（通关次数 / 代币 / 最终比例共用同一口径）
+function simulateTrialProgress(metricsList) {
+  const N = metricsList.length; if (N===0) return { passes:0, timeLeft:TRIAL_DURATION };
   const countMult = 1 + COUNT_INFLATION*N;
   let T = START_LV, passes = 0, carry = 0, timeLeft = TRIAL_DURATION;
   while (timeLeft > 0 && passes < MAX_PASS_GUARD) {
@@ -1825,7 +1931,67 @@ function computePasses(metricsList) {
     if (tNeeded > timeLeft + 1e-9) break;
     timeLeft -= tNeeded; carry = carry + tNeeded*rate - required; passes++; T += LV_PER_PASS;
   }
-  return passes;
+  return { passes, timeLeft };
+}
+
+function computePasses(metricsList) {
+  return simulateTrialProgress(metricsList).passes;
+}
+
+// 代币奖励（对齐 Chen19970809/MWI_Trial_Calculator）：首层完成 200，之后每层 +100；
+// 未完成的当前层只获得「进度 × 该层奖励 ÷ 2」。
+function tokenReward(metricsList) {
+  const N = metricsList.length;
+  if (N === 0) return 0;
+  const sim = simulateTrialProgress(metricsList);
+  let total = 0;
+  for (let i = 0; i < sim.passes; i++) total += (i === 0 ? 200 : 100);
+  if (sim.passes < MAX_PASS_GUARD && sim.timeLeft > 0) {
+    const currentReward = sim.passes === 0 ? 200 : 100;
+    const currentLv = START_LV + sim.passes * LV_PER_PASS;
+    let rate = 0;
+    for (const m of metricsList) rate += expectedRate(m, currentLv);
+    const countMult = 1 + COUNT_INFLATION * N;
+    const required = (BASE_TOTAL_PT + PT_GROWTH * sim.passes) * countMult;
+    const progress = required > 0 && rate > 0 ? Math.min(1, rate * sim.timeLeft / required) : 0;
+    total += currentReward * (progress / 2);
+  }
+  return total;
+}
+
+// 逐阶段时间表：从起始等级起，每 10 级一档，返回 [{ lv, single, cum }]
+//   lv     = 该阶段起始等级（打的是 lv → lv+10）
+//   single = 该阶段需要的秒数
+//   cum    = 从起始等级一路打到「该阶段结束」的累计秒数（含 carry 余分，与推演一致）
+function estimateStageTimes(metricsList, stageCount) {
+  const out = [];
+  if (!Array.isArray(metricsList) || metricsList.length === 0) return out;
+  const n = Math.max(1, Math.floor(stageCount) || 1);
+  const countMult = 1 + COUNT_INFLATION * metricsList.length;
+  let T = START_LV, passes = 0, carry = 0, elapsed = 0;
+  while (passes < n) {
+    let rate = 0;
+    for (const m of metricsList) rate += expectedRate(m, T);
+    const required = (BASE_TOTAL_PT + PT_GROWTH * passes) * countMult;
+    if (rate <= 1e-9) { out.push({ lv: T, single: null, cum: null }); passes++; T += LV_PER_PASS; continue; }
+    const tNeeded = Math.max(0, required - carry) / rate;
+    elapsed += tNeeded;
+    out.push({ lv: T, single: tNeeded, cum: elapsed });
+    carry = carry + tNeeded * rate - required;
+    passes++; T += LV_PER_PASS;
+  }
+  return out;
+}
+
+function formatDuration(seconds) {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '—';
+  if (seconds <= 0) return '0s';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return h + 'h' + (m < 10 ? '0' : '') + m + 'm';
+  if (m > 0) return m + 'm' + (s < 10 ? '0' : '') + s + 's';
+  return s + 's';
 }
 
 function finalLv(metricsList) { return START_LV + LV_PER_PASS * computePasses(metricsList); }
@@ -1898,11 +2064,12 @@ function runAssignment(people, cfgs) {
   localSearch(assignment,people,cfgs,mm);
   const P=people.length; const assigned=Array.from({length:NUM_TRIALS},()=>[]);
   for(let p=0;p<P;p++){const j=assignment[p];if(j>=0)assigned[j].push({person:people[p],metrics:mm[p][cfgs[j].skill]});}
-  let grandFinal=0,grandPasses=0,grandCount=0; const cache=new Array(NUM_TRIALS);
+  let grandFinal=0,grandPasses=0,grandCount=0,grandTokens=0; const cache=new Array(NUM_TRIALS);
   for(let j=0;j<NUM_TRIALS;j++){
     // 试炼内人员列表按「该试炼技能等级」降序（同等级按角色名，保证结果稳定）
     const list=assigned[j]; list.sort((a,b)=> (b.metrics.baseLevel - a.metrics.baseLevel) || a.person.name.localeCompare(b.person.name,'zh-Hans-CN'));
-    const passes=computePasses(list.map(e=>e.metrics));
+    const metricsList=list.map(e=>e.metrics);
+    const passes=computePasses(metricsList);
     const fLv=START_LV+LV_PER_PASS*passes;
     grandFinal+=fLv; grandPasses+=passes; grandCount+=list.length;
     const countMult = 1 + COUNT_INFLATION * list.length;
@@ -1911,11 +2078,28 @@ function runAssignment(people, cfgs) {
     const finalT = START_LV + LV_PER_PASS * passes;
     let rateAtFinal = 0; for (const e of list) rateAtFinal += expectedRate(e.metrics, finalT);
     let sum=0; for(const e of list) sum+=e.person.levels[cfgs[j].skill];
-    cache[j]={list,sum,passes,finalLv:fLv,reqNext,sumWork,rateAtFinal,max:cfgs[j].max,skill:cfgs[j].skill};
+    // 代币 / 当前等级分数 / 最终比例 / 逐阶段时间表（口径对齐 Chen19970809/MWI_Trial_Calculator）
+    const tokens = tokenReward(metricsList);
+    grandTokens += tokens;
+    // 「当前等级所需分数」= 正在进行的那一层；「累计分数」= 之前各层之和
+    const targetNeeds = reqNext;
+    let cumulativePts = 0;
+    for (let p = 0; p < passes; p++) cumulativePts += Math.ceil((BASE_TOTAL_PT + PT_GROWTH * p) * countMult);
+    // 最终比例 = 本场剩余时间内的期望得分 ÷ 通关最后一层所需分数
+    const sim = simulateTrialProgress(metricsList);
+    const timeAtFinal = Math.max(0, sim.timeLeft);
+    let totalFinalScore = 0;
+    for (const e of list) totalFinalScore += expectedRate(e.metrics, finalT) * timeAtFinal;
+    const finalRatio = reqNext > 0 ? (totalFinalScore / reqNext) : 0;
+    // 逐阶段时间表：100 级 → 当前最终等级 +10（多列一层「下一阶段」，超时变灰），每 10 级一行
+    const stageCount = Math.max(1, Math.round((fLv - START_LV) / LV_PER_PASS) + 1);
+    const stages = estimateStageTimes(metricsList, stageCount);
+    cache[j]={list,sum,passes,finalLv:fLv,reqNext,sumWork,rateAtFinal,max:cfgs[j].max,skill:cfgs[j].skill,
+      tokens,targetNeeds,cumulativePts,finalRatio,stages};
   }
   const assignedIds=new Set(); for(const l of assigned) for(const e of l) assignedIds.add(e.person.id);
   const unassigned=people.filter(p=>!assignedIds.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
-  return {cache,unassigned,grandCount,grandFinal,grandPasses,assignment};
+  return {cache,unassigned,grandCount,grandFinal,grandPasses,grandTokens,assignment};
 }
 
 // === SVG Helper ===
@@ -1991,7 +2175,7 @@ function updateStaticText() {
   document.getElementById('export-script-link').title = t('exportScriptTitle');
   document.getElementById('btn-calculate').textContent = t('calculate');
   document.getElementById('btn-lang').textContent = t('language');
-  document.getElementById('btn-theme').textContent = t('theme');
+  syncThemeBtn();
   const connEl = document.getElementById('conn-status');
   if (!state.isShared) connEl.textContent = t('offlineMode');
   else connEl.textContent = t('connected')+': '+state.guild;
@@ -2042,8 +2226,35 @@ function renderTrialCards() {
         const lv = Number(e.metrics && e.metrics.baseLevel != null ? e.metrics.baseLevel : e.person.levels[cfg.skill]) || 0;
         return '<div class="trial-member-item"><span class="ml">'+escHtml(e.person.name)+'</span><span class="mr">Lv'+lv+'</span></div>';
       }).join('');
-      const rateStr = c.rateAtFinal.toFixed(1);
-      resultHtml = '<div class="trial-result">Lv'+c.finalLv+' &middot; '+c.passes+t('passes')+' &middot; '+c.list.length+'/'+c.max+t('people')+'<br>'+t('teamWork')+' '+c.sumWork+' &middot; ~'+rateStr+t('perSec')+' @ Lv'+c.finalLv+'<br>'+t('nextClearNeeds')+' '+c.reqNext+' '+t('pts')+'</div>';
+      // 结果文本对齐 Chen19970809/MWI_Trial_Calculator：前 3 行 —— 到达等级/通关/人数/代币、
+      // 团队工作能力与期望秒产出、当前等级所需分数/累计分数/最终比例；
+      // 第 4 块改成「逐阶段时间表」：100 级 → 当前最终等级 +10，每 10 级一行（阶段耗时 + 累计耗时）。
+      const rateStr = c.rateAtFinal.toFixed(2);
+      const ratioStr = (Number(c.finalRatio) || 0) > 0 ? (c.finalRatio * 100).toFixed(2) + '%' : '-';
+      const stages = Array.isArray(c.stages) ? c.stages : [];
+      // 逐阶段时间表：行 = 「从该等级打到 +10 的这一层」，单关 = 该层耗时，累计 = 通关该层后的总耗时。
+      // 累计超过本场时长（1 小时）的行只变灰（正常情况下最后一行就是打满 1 小时到达的最终等级）。
+      const stageRows = stages.map(function(s){
+        const over = (s.cum === null) || (Number(s.cum) > TRIAL_DURATION);
+        return '<div class="tstage'+(over ? ' is-over' : '')+'">'
+          + '<span class="tstage-lv">Lv'+s.lv+'</span>'
+          + '<span class="tstage-t">'+formatDuration(s.single)+'</span>'
+          + '<span class="tstage-t">'+formatDuration(s.cum)+'</span>'
+          + '</div>';
+      }).join('');
+      resultHtml = '<div class="trial-result">'
+        + t('reach')+' Lv'+c.finalLv+' &middot; '+c.passes+t('passes')+' &middot; '+c.list.length+'/'+c.max+t('people')
+          +' &middot; '+t('tokens')+': <strong>'+Math.floor(c.tokens)+'</strong><br>'
+        + t('teamWork')+' '+c.sumWork+' &middot; ~'+rateStr+t('perSec')+' @ Lv'+c.finalLv+'<br>'
+        + t('currentLevelNeeds')+' '+c.targetNeeds.toLocaleString()+' '+t('pts')
+          +' &middot; '+t('cumulativePts')+' '+c.cumulativePts.toLocaleString()+' '+t('pts')
+          +' &middot; '+t('finalRatio')+' '+ratioStr
+        + '</div>'
+        + (stageRows ? '<div class="trial-stages"><div class="tstage tstage-head">'
+          + '<span class="tstage-lv">'+t('stageLevel')+'</span>'
+          + '<span class="tstage-t">'+t('singlePassTime')+'</span>'
+          + '<span class="tstage-t">'+t('cumulativeTime')+'</span>'
+          + '</div><div class="tstage-body">'+stageRows+'</div></div>' : '');
     }
     return '<div class="trial-card">'+
       '<div class="trial-card-header">'+
@@ -2212,10 +2423,17 @@ function memberMainHandHtml(p) {
 // === 成员详情弹窗：专业 / 装备 / 房屋 / 神龛 / 成就 等个人数据集中编辑 ===
 // memberDetailId 记录当前打开的成员（null = 未打开）；渲染前用它判断是否需要刷新弹窗。
 let memberDetailId = null;
+// 详情弹窗当前标签页：'profile'（个人资料，可编辑）| 'stats'（生活属性，只读推演指标）
+let memberDetailTab = 'profile';
+function switchMemberDetailTab(tab) {
+  memberDetailTab = (tab === 'stats') ? 'stats' : 'profile';
+  renderMemberDetail(memberDetailId);
+}
 function openMemberDetail(id) {
   const p = state.members.find(x => x.id === id);
   if (!p) return;
   memberDetailId = id;
+  memberDetailTab = 'profile';
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.id = 'member-detail-overlay';
@@ -2350,8 +2568,8 @@ function renderMemberDetail(id) {
       + '<span class="di-label">'+escHtml(en?d.en:d.zh)+'<span class="di-sub">'+escHtml(en?d.effectEn:d.effectZh)+'</span></span></label>';
   }
   // 区块顺序：专业 → 装备 → 房屋 → 神龛 → 成就完成
-  body.innerHTML =
-    '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('detailSkillTip'))+'">'+escHtml(t('detailSkillSec'))+'</div><div class="detail-grid">'+skillHtml+'</div></div>'
+  const profileHtml =
+    '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('detailSkillTip'))+'">'+escHtml(t('detailSkillSec'))+'</div><div class="detail-grid skill-grid">'+skillHtml+'</div></div>'
     + '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('detailEquipTip'))+'">'+escHtml(t('detailEquipSec'))+'</div>'
       + '<div class="detail-subtitle" title="'+escHtml(t('lifeEquipTip'))+'">'+escHtml(t('lifeEquipSec'))+'</div>'
       + '<div class="own-rows">'+lifeRows+'</div>'
@@ -2365,6 +2583,189 @@ function renderMemberDetail(id) {
     + '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('houseRoomsTip'))+'">'+escHtml(t('detailHouseSec'))+'</div><div class="detail-grid">'+houseHtml+'</div></div>'
     + '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('guildShrinePerMemberTip'))+'">'+escHtml(t('detailShrineSec'))+'</div>'+shrineHtml+'</div>'
     + '<div class="detail-section"><div class="detail-section-title" title="'+escHtml(t('achievementsTip'))+'">'+escHtml(t('detailAchSec'))+'</div><div class="detail-grid">'+achHtml+'</div></div>';
+
+  // 标签页：① 个人资料（以上全部编辑项）② 生活属性（只读推演指标，见 renderLifeStatsHtml）
+  const tab = (memberDetailTab === 'stats') ? 'stats' : 'profile';
+  body.innerHTML =
+    '<div class="detail-tabs">'
+      + '<button class="detail-tab'+(tab === 'profile' ? ' active' : '')+'" onclick="switchMemberDetailTab(\'profile\')">'+escHtml(t('detailTabProfile'))+'</button>'
+      + '<button class="detail-tab'+(tab === 'stats' ? ' active' : '')+'" onclick="switchMemberDetailTab(\'stats\')">'+escHtml(t('detailTabStats'))+'</button>'
+    + '</div>'
+    + '<div class="detail-page">'+(tab === 'stats' ? renderLifeStatsHtml(p) : profileHtml)+'</div>';
+}
+
+// === 生活属性标签页 ===
+// 口径与试炼推演完全一致（computePersonSkillMetrics）；悬停说明的分行结构与来源分解对齐
+// Chen19970809/MWI_Trial_Calculator 的 lvTip / srTip / wpTip / speedTip / dpTip。
+//   等级     = 基础等级 + 公会建筑等级加成（房屋 / 装备 / 成就里的等级加成不计入）
+//   成功率   = successRate(有效等级, 目标等级, 成功率加成)，成功率加成只有强化技能生效
+//   工作能力 = ⌊有效等级 × (1 + 效率加成)⌋
+//   单次速度 = 10 秒 ÷ (1 + 速度加成)
+//   双倍概率 = 采集 / 美食加成合计（0 ~ 100%）
+// 悬停里的来源列表由 srcAllowed() 过滤：房屋只列在效率（和强化的速度/成功率）、
+// 全局只列在实际有该类 buff 的技能、公会建筑只列在等级，避免出现恒为 0% 的归因。
+// 目标等级：页面可动态配置（默认 100），只影响本页成功率展示，不改变试炼推演结果。
+const LIFE_TARGET_LV_DEFAULT = 100;
+let lifeTargetLv = LIFE_TARGET_LV_DEFAULT;
+try { const v0 = Number(localStorage.getItem('mwi_life_target_lv')); if (Number.isFinite(v0) && v0 > 0) lifeTargetLv = Math.max(10, Math.round(Math.floor(v0) / 10) * 10); } catch(e) {}
+// 目标等级按「10 级」为最小调整单位（与试炼等级台阶一致），输入非整十时就近取整到 10 的倍数
+function setLifeTargetLevel(val) {
+  const n = Math.floor(Number(val));
+  lifeTargetLv = (Number.isFinite(n) && n > 0) ? Math.min(9990, Math.max(10, Math.round(n / 10) * 10)) : LIFE_TARGET_LV_DEFAULT;
+  try { localStorage.setItem('mwi_life_target_lv', String(lifeTargetLv)); } catch(e) {}
+  renderMemberDetail(memberDetailId);
+}
+function fmtLvNum(v) {
+  const n = Number(v) || 0;
+  return String(Math.round(n * 10) / 10);
+}
+function fmtPct(v, digits) {
+  return ((Number(v) || 0) * 100).toFixed(digits === undefined ? 1 : digits) + '%';
+}
+// 不带 % 的百分比数值（tooltip 模板里已经写了 %，占位符只放数字）
+function fmtPctNum(v, digits) {
+  return ((Number(v) || 0) * 100).toFixed(digits === undefined ? 1 : digits);
+}
+function fillTip(tpl, map) {
+  let s = String(tpl);
+  for (const k in map) s = s.split('{'+k+'}').join(String(map[k]));
+  return s;
+}
+// 来源对象 → tooltip 占位符：asLv=true 按等级（1 位小数），否则按百分比（1 位 / 2 位小数）
+function srcTipVars(src, digits) {
+  const z = src || {};
+  const f = (digits === null)
+    ? function(x){ return fmtLvNum(x); }
+    : function(x){ return fmtPctNum(x, digits === undefined ? 1 : digits); };
+  return {
+    equip: f(z.equip), achievement: f(z.achievement), buffHouse: f(z.buffHouse),
+    buffServer: f(z.buffServer), buffOther: f(z.buffOther), global: f(z.global),
+    building: f(z.building), shrine: f(z.shrine)
+  };
+}
+// 「哪些来源有可能影响该指标」——按游戏数据写死，不可能影响的不进悬停文本（避免一排 0% 噪声）：
+//   房屋：10 个生活房间都只给效率 +1.5%/级；只有强化房屋（天文台）额外给行动速度 +1%/级、强化成功率 +0.05%/级
+//   全局 buff：采集类只有 gathering（双倍），生产类才有效率，强化只有行动速度，全局没有成功率加成
+//   公会建筑：只给技能等级，不给效率 / 速度 / 双倍
+//   神龛：生活向只有 力量（效率）/ 节奏（速度）
+//   全服 / 其他 buff：本项目没有该聚合数据，恒为 0，直接不展示
+const SRC_ORDER = ['equip','achievement','buffHouse','global','building','shrine'];
+function srcAllowed(key, metric, skillId) {
+  const isProd = PRODUCTION_SKILL_IDS.has(skillId);
+  const isGath = GATHERING_SKILL_IDS.has(skillId);
+  const isEnh = skillId === 'enhancing';
+  if (key === 'equip' || key === 'achievement') return true;
+  if (key === 'buffHouse') {
+    // 9 个生活房间（奶牛棚…实验室）只给效率；强化房间（天文台）只给行动速度 + 强化成功率
+    if (metric === 'efficiency') return !isEnh;
+    return isEnh && (metric === 'speed' || metric === 'success');
+  }
+  if (key === 'global') {
+    if (metric === 'efficiency') return isProd;
+    if (metric === 'speed') return isEnh;
+    if (metric === 'gathering') return isGath;
+    return false;
+  }
+  if (key === 'building') return metric === 'skillLevel';
+  if (key === 'shrine') return metric === 'efficiency' || metric === 'speed';
+  return false;
+}
+// 来源文本：「装备 2.0% / 成就 1.0%」，只拼允许的来源
+function srcListTip(src, metric, skillId, digits) {
+  const z = src || {};
+  const d = (digits === undefined) ? 1 : digits;
+  const parts = [];
+  for (const k of SRC_ORDER) {
+    if (!srcAllowed(k, metric, skillId)) continue;
+    let label;
+    if (k === 'equip') label = t('srcEquip');
+    else if (k === 'achievement') label = t('srcAchievement');
+    else if (k === 'buffHouse') label = t('srcHouse');
+    else if (k === 'global') label = t('srcGlobal');
+    else if (k === 'building') label = t('srcBuilding');
+    else label = (metric === 'speed') ? t('srcShrineTempo') : t('srcShrineForce');
+    parts.push(label + ' ' + fmtPctNum(z[k], d) + '%');
+  }
+  return parts.join(' / ');
+}
+function renderLifeStatsHtml(p) {
+  const tgtLv = lifeTargetLv;
+  let rows = '';
+  for (let s = 0; s < SKILL_KEYS.length; s++) {
+    const m = computePersonSkillMetrics(p, s);
+    const src = m.sources || {};
+    const emp = { equip:0, buffHouse:0, buffServer:0, buffOther:0, buffTotal:0, achievement:0, global:0, building:0, shrine:0, total:0 };
+    const srcLv = src.skillLevel || emp;
+    const srcSr = src.success || emp;
+    const srcEff = src.efficiency || emp;
+    const srcSpd = src.speed || emp;
+    const srcGat = src.gathering || emp;
+    const sr = successRate(m.effLevel, tgtLv, m.successBonus);
+    const zero = !(Number(m.baseLevel) > 0);
+    const lvBonus = Number(m.effLevel) - Number(m.baseLevel);
+    const skillId = SKILL_KEYS[s];
+    const isEnh = skillId === 'enhancing';
+
+    // 等级：基础 + 各来源等级加成 = 有效等级
+    const lvTip = fillTip(t('lsLevelTip'), Object.assign(srcTipVars(srcLv, null), {
+      base: fmtLvNum(m.baseLevel), eff: fmtLvNum(m.effLevel)
+    }));
+    // 成功率：等级差 + 各来源成功率加成（成功率加成只有强化技能吃 → 其它技能用无加成版模板）
+    const delta = m.effLevel - tgtLv;
+    const perLv = delta >= 0 ? SUCCESS_ABOVE : SUCCESS_BELOW;
+    const rawRate = SUCCESS_BASE * (1 + perLv * delta + m.successBonus);
+    const srTip = fillTip(t(isEnh ? 'lsSuccessTip' : 'lsSuccessTipPlain'), {
+      effLv: fmtLvNum(m.effLevel), targetLv: fmtLvNum(tgtLv), delta: fmtLvNum(delta),
+      cmp: delta >= 0 ? t('lsLevelAboveTarget') : t('lsLevelBelowTarget'),
+      adjPct: (perLv * 100).toFixed(1), levelAdj: (perLv * delta * 100).toFixed(1),
+      successBonus: fmtPctNum(m.successBonus, 2),
+      srcList: srcListTip(srcSr, 'success', skillId, 2),
+      basePct: (SUCCESS_BASE * 100).toFixed(2), rawPct: (rawRate * 100).toFixed(2), pct: (sr * 100).toFixed(2)
+    });
+    // 工作能力：有效等级 × (1 + 效率加成) 向下取整
+    const wpTip = fillTip(t('lsWorkTip'), {
+      effLv: fmtLvNum(m.effLevel), efficiencyBonus: fmtPctNum(m.efficiencyBonus, 1),
+      effMult: (1 + m.efficiencyBonus).toFixed(3), raw: (m.effLevel * (1 + m.efficiencyBonus)).toFixed(2),
+      workP: Math.floor(m.workP), srcList: srcListTip(srcEff, 'efficiency', skillId, 1)
+    });
+    // 单次速度：基础 10 秒 ÷ (1 + 速度加成)
+    const spTip = fillTip(t('lsSpeedTip'), {
+      baseSec: BASE_ACTION_SEC, speedBonus: fmtPctNum(m.speedBonus, 1),
+      speedMult: (1 + m.speedBonus).toFixed(3), actionSeconds: m.actionSeconds.toFixed(2),
+      srcList: srcListTip(srcSpd, 'speed', skillId, 1)
+    });
+    // 双倍概率：采集 / 美食加成合计，限制 0 ~ 100%
+    const dbTip = fillTip(t('lsDoubleTip'), {
+      gatheringBonus: fmtPctNum(m.gatheringBonus, 1), pct: Math.round(m.dblP * 100),
+      srcList: srcListTip(srcGat, 'gathering', skillId, 1)
+    });
+
+    rows += '<tr'+(zero ? ' class="is-zero"' : '')+(zero ? ' title="'+escHtml(t('lsNoLevel'))+'"' : '')+'>'
+      + '<td><span class="ls-skill">'+svgIcon(SKILL_KEYS[s], 18, 18)+'<span>'+escHtml(skillLabel(s))+'</span></span></td>'
+      + '<td title="'+escHtml(lvTip)+'"><span class="ls-main">'+fmtLvNum(m.effLevel)+'</span>'
+        + (Math.abs(lvBonus) > 0.001 ? '<span class="ls-sub">'+fmtLvNum(m.baseLevel)+' + '+fmtLvNum(lvBonus)+'</span>' : '')
+        + '</td>'
+      // 等级 0 = 未练该技能，成功率 / 工作能力等指标没有实际意义 → 显示「—」（悬停提示原因）
+      + '<td title="'+escHtml(srTip)+'">'+(zero ? '—' : '<span class="ls-main">'+fmtPct(sr)+'</span><span class="ls-sub">@Lv'+fmtLvNum(tgtLv)+'</span>')+'</td>'
+      + '<td title="'+escHtml(wpTip)+'">'+(zero ? '—' : Math.floor(m.workP))+'</td>'
+      + '<td title="'+escHtml(spTip)+'">'+(zero ? '—' : m.actionSeconds.toFixed(2)+'s')+'</td>'
+      + '<td title="'+escHtml(dbTip)+'">'+(zero ? '—' : fmtPct(m.dblP))+'</td>'
+      + '</tr>';
+  }
+  // 目标等级可动态配置（默认 100），只影响本页成功率
+  const bar = '<div class="life-stats-bar"><label title="'+escHtml(t('lsTargetTip'))+'">'
+    + escHtml(t('lsTargetLabel'))
+    + ' <input type="number" min="10" max="9990" step="10" value="'+lifeTargetLv+'" onchange="setLifeTargetLevel(this.value)">'
+    + '</label></div>';
+  return bar
+    + '<table class="life-stats"><thead><tr>'
+    + '<th>'+escHtml(t('lsSkill'))+'</th>'
+    + '<th title="'+escHtml(t('lsLevelFormula'))+'">'+escHtml(t('lsLevel'))+'</th>'
+    + '<th title="'+escHtml(t('lsSuccessFormula'))+'">'+escHtml(t('lsSuccess'))+'</th>'
+    + '<th title="'+escHtml(t('lsWorkFormula'))+'">'+escHtml(t('lsWork'))+'</th>'
+    + '<th title="'+escHtml(t('lsSpeedFormula'))+'">'+escHtml(t('lsSpeed'))+'</th>'
+    + '<th title="'+escHtml(t('lsDoubleFormula'))+'">'+escHtml(t('lsDouble'))+'</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
 function renderSummary() {
@@ -2391,11 +2792,20 @@ function escHtml(s) {
 // 注：角色名后不再显示神龛等级（神龛改在成员详情弹窗编辑），原 personalShrineBadge 已移除
 
 // === Theme & Language ===
+// 主题按钮图标只跟着「当前主题」走：浅色显示月亮（点击切深色），深色显示太阳（点击切浅色）。
+// 与语言无关 —— 之前图标取的是 i18n 的 t('theme')，所以切语言会变、切主题反而不变。
+function themeIcon() { return state.theme === 'light' ? '🌙' : '☀️'; }
+function syncThemeBtn() {
+  const b = document.getElementById('btn-theme');
+  if (!b) return;
+  b.textContent = themeIcon();
+  b.title = t('themeTip');
+}
 function toggleTheme() {
   state.theme = state.theme === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', state.theme);
   try { localStorage.setItem('mwi_theme', state.theme); } catch(e) {}
-  document.getElementById('btn-theme').textContent = t('theme');
+  syncThemeBtn();
 }
 function toggleLang() {
   state.lang = state.lang === 'zh' ? 'en' : 'zh';
