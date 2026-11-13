@@ -899,7 +899,11 @@ const I18N = {
     noToolEquipped:'未选择工具', noMainHand:'未选择主手武器',
     trialSlotsAuto:'由生活营地决定', trialSlotsFromCamp:'生活营地 Lv{level}：{base} + {level}×{per} = {cap}',
     noAssign:'(暂无分配)', noMembers:'暂无成员数据，请添加成员或导入 JSON',
-    totalFinalLv:'总最终等级', totalPasses:'总通关', assigned:'已分配', unassigned:'未分配',
+    totalFinalLv:'总最终等级', totalPasses:'总通关', totalTokens:'总代币', assigned:'已分配', unassigned:'未分配',
+    guildPoints:'获得公会点数',
+    guildPointsTip:'基础点数总和 {base} × (1 + 建造者殿堂 Lv{builderLv} × 2% = +{builderPct}%) = {points}\n公会点数归公会所有，用于升级建筑与神龛。\n本计算器只模拟 4 场生活试炼；游戏每周还有 2 场战斗试炼（首层 400、之后每层 200）未计入。',
+    totalTokensTip:'总代币 = 每位符合条件成员的代币：0.5 × 基础点数总和 {base} × (1 + 金库 Lv{treasuryLv} × 2% = +{treasuryPct}%) = {member}\n报名至少一场试炼的成员额外 +50% = {bonus}，合计 {total}\n各试炼卡里的「代币」是该试炼的基础点数（生活：首层 200、之后每层 100，未完成层按进度最多给一半）。',
+    trialTokensTip:'该试炼的基础公会点数（生活：首层 200、之后每层 100；未完成层按进度最多给一半）。汇总栏「总代币」= 0.5 × 各试炼基础点数合计 × (1 + 金库加成)。',
     unassignedTitle:'未分配成员',
     deleteBtn:'删', selectEquip:'选择装备', searchEquip:'搜索装备...',
     enhanceLevel:'强化等级', clear:'清除', cancel:'取消', confirm:'确认',
@@ -998,7 +1002,11 @@ const I18N = {
     noToolEquipped:'No tool selected', noMainHand:'No main-hand weapon',
     trialSlotsAuto:'set by Skilling Encampment', trialSlotsFromCamp:'Skilling Encampment Lv{level}: {base} + {level}×{per} = {cap}',
     noAssign:'(None)', noMembers:'No member data. Add members or import JSON.',
-    totalFinalLv:'Total Final Lv', totalPasses:'Total Passes', assigned:'Assigned', unassigned:'Unassigned',
+    totalFinalLv:'Total Final Lv', totalPasses:'Total Passes', totalTokens:'Total Tokens', assigned:'Assigned', unassigned:'Unassigned',
+    guildPoints:'Guild Points Earned',
+    guildPointsTip:'Total base points {base} × (1 + Builder\'s Hall Lv{builderLv} × 2% = +{builderPct}%) = {points}\nGuild Points belong to the guild and fund buildings / shrines.\nOnly the 4 skilling trials are simulated here; the 2 weekly combat trials (400 for the first tier, 200 per extra tier) are not included.',
+    totalTokensTip:'Total Tokens = payout for each eligible member: 0.5 × total base points {base} × (1 + Treasury Lv{treasuryLv} × 2% = +{treasuryPct}%) = {member}\nMembers signed up for at least one trial get a further +50% = {bonus}, for a total of {total}\nThe "Tokens" on each trial card is that trial\'s base points (skilling: 200 for the first tier, 100 per extra tier; an unfinished tier pays up to half).',
+    trialTokensTip:'Base Guild Points from this trial (skilling: 200 for the first tier, 100 per extra tier; an unfinished tier pays up to half). Summary "Total Tokens" = 0.5 × sum of all trials\' base points × (1 + Treasury bonus).',
     unassignedTitle:'Unassigned members',
     deleteBtn:'Del', selectEquip:'Select Equipment', searchEquip:'Search equipment...',
     enhanceLevel:'Enhancement Level', clear:'Clear', cancel:'Cancel', confirm:'Confirm',
@@ -1160,6 +1168,9 @@ const EMBEDDED_CLIENT_DATA = {"houseRoomDetailMap": {"/house_rooms/archery_range
 const TRIAL_DURATION = 3600, START_LV = 100, LV_PER_PASS = 10, COUNT_INFLATION = 0.01;
 const BASE_ACTION_SEC = 10, SUCCESS_BASE = 0.80, SUCCESS_BELOW = 0.01, SUCCESS_ABOVE = 0.005, SUCCESS_MIN = 0.05;
 const BASE_TOTAL_PT = 40000, PT_GROWTH = 4000, MAX_PASS_GUARD = 10000, NUM_TRIALS = 4;
+// 公会建筑加成（官网页面未公开每级系数；沿用 Chen19970809/MWI_Trial_Calculator 中 builder 的 2%/级口径）：
+// 建造者殿堂 → 公会点数；金库 → 公会代币。改这里即可换成官方实测值。
+const GUILD_POINTS_BONUS_PER_LEVEL = 0.02, GUILD_TOKEN_BONUS_PER_LEVEL = 0.02;
 
 const EQUIP_ICONS = {
   "主手":["stalactite_spear","granite_bludgeon","furious_spear","furious_spear_refined","regal_sword","regal_sword_refined","chaotic_flail","chaotic_flail_refined","soul_hunter_crossbow","sundering_crossbow","sundering_crossbow_refined","frost_staff","infernal_battlestaff","jackalope_staff","rippling_trident","rippling_trident_refined","blooming_trident","blooming_trident_refined","blazing_trident","blazing_trident_refined","cheese_sword","verdant_sword","azure_sword","burble_sword","crimson_sword","rainbow_sword","holy_sword","cheese_spear","verdant_spear","azure_spear","burble_spear","crimson_spear","rainbow_spear","holy_spear","cheese_mace","verdant_mace","azure_mace","burble_mace","crimson_mace","rainbow_mace","holy_mace","wooden_crossbow","birch_crossbow","cedar_crossbow","purpleheart_crossbow","ginkgo_crossbow","redwood_crossbow","arcane_crossbow","wooden_water_staff","birch_water_staff","cedar_water_staff","purpleheart_water_staff","ginkgo_water_staff","redwood_water_staff","arcane_water_staff","wooden_nature_staff","birch_nature_staff","cedar_nature_staff","purpleheart_nature_staff","ginkgo_nature_staff","redwood_nature_staff","arcane_nature_staff","wooden_fire_staff","birch_fire_staff","cedar_fire_staff","purpleheart_fire_staff","ginkgo_fire_staff","redwood_fire_staff","arcane_fire_staff","gobo_stabber","gobo_slasher","gobo_smasher","spiked_bulwark","werewolf_slasher","griffin_bulwark","griffin_bulwark_refined","gobo_shooter","vampiric_bow","cursed_bow","cursed_bow_refined","gobo_boomstick","cheese_bulwark","verdant_bulwark","azure_bulwark","burble_bulwark","crimson_bulwark","rainbow_bulwark","holy_bulwark","wooden_bow","birch_bow","cedar_bow","purpleheart_bow","ginkgo_bow","redwood_bow","arcane_bow"],
@@ -1938,8 +1949,9 @@ function computePasses(metricsList) {
   return simulateTrialProgress(metricsList).passes;
 }
 
-// 代币奖励（对齐 Chen19970809/MWI_Trial_Calculator）：首层完成 200，之后每层 +100；
-// 未完成的当前层只获得「进度 × 该层奖励 ÷ 2」。
+// 单场生活试炼的「基础公会点数」（数值口径对齐 Chen19970809/MWI_Trial_Calculator 的 tokenReward）：
+// 首层完成 200，之后每层 +100；未完成的当前层只获得「进度 × 该层奖励 ÷ 2」。
+// 官方规则见 docs/milkywayidle-游戏指南.md → 公会 → 「公会点数与公会代币」。
 function tokenReward(metricsList) {
   const N = metricsList.length;
   if (N === 0) return 0;
@@ -1957,6 +1969,24 @@ function tokenReward(metricsList) {
     total += currentReward * (progress / 2);
   }
   return total;
+}
+
+// === 公会奖励换算（官方公式：游戏指南 → 公会 →「公会点数与公会代币」）===
+//   基础点数总和 = Σ 各试炼 tokenReward（生活：首层 200、之后每层 100，未完成层按进度最多一半）
+//   公会点数     = 基础点数总和 × (1 + 建造者殿堂等级 × 每级加成)
+//   每人代币     = 0.5 × 基础点数总和 × (1 + 金库等级 × 每级加成)   ← 每位「符合条件」的成员
+//   参与奖励     = 每人代币 × 50%（报名至少一场试炼的成员额外获得）
+// 注：本计算器只模拟 4 场生活试炼；游戏里另有 2 场战斗试炼（首层 400、之后每层 200）未计入。
+function guildRewardMultipliers() {
+  const gb = (state && state.guildBuildings) || {};
+  const cap = (typeof GUILD_BUILDING_MAX_LEVEL !== 'undefined') ? GUILD_BUILDING_MAX_LEVEL : 20;
+  const lv = k => Math.max(0, Math.min(cap, Math.floor(Number(gb[k]) || 0)));
+  const builderLv = lv('builders_hall'), treasuryLv = lv('treasury');
+  return {
+    builderLv, treasuryLv,
+    pointsMult: 1 + builderLv * GUILD_POINTS_BONUS_PER_LEVEL,
+    tokenMult: 1 + treasuryLv * GUILD_TOKEN_BONUS_PER_LEVEL
+  };
 }
 
 // 逐阶段时间表：从起始等级起，每 10 级一档，返回 [{ lv, single, cum }]
@@ -2024,44 +2054,124 @@ function initialAssignment(people, cfgs, mm) {
   return a;
 }
 
+// 贪心局部搜索。目标 = 各试炼「基础公会点数」之和（与每位成员代币成正比，不是 Σ最终等级）。
+//   ① 基础点数是连续量：首层 200、之后每层 100，未完成的当前层还有「进度 × 该层奖励 ÷ 2」。
+//      Σ最终等级只有 10 级台阶，通关次数相同的方案全都同分，看不到「少带一个拖后腿的人
+//      让本层推进更快」这类收益；换成代币后目标函数有了梯度，能继续优化。
+//   ② tokenReward 内含人数膨胀 (1 + 1%×N)：某人贡献抵不上他带来的难度增幅时，
+//      把他放进队伍会让该区代币下降，阶段 1 会把他移到「不参加」（newT = -1）——
+//      也就是「限制最低贡献」这条规则由目标函数自然实现，不需要额外硬阈值。
+// lists[j] 存 person 下标（不用 metrics 对象引用），每轮从 assignment 重建，避免增量更新失步。
 function localSearch(assignment, people, cfgs, mm) {
-  const P=people.length; const lists=Array.from({length:NUM_TRIALS},()=>[]);
-  for(let p=0;p<P;p++){ const j=assignment[p]; if(j>=0) lists[j].push(mm[p][cfgs[j].skill]); }
-  const tLv=new Array(NUM_TRIALS); for(let j=0;j<NUM_TRIALS;j++) tLv[j]=finalLv(lists[j]);
-  const without=(l,m)=>{const o=[];let r=false;for(const x of l){if(!r&&x===m){r=true;continue;}o.push(x);}return o;};
-  const withAdd=(l,m)=>l.concat([m]);
+  const P=people.length;
+  const lists=Array.from({length:NUM_TRIALS},()=>[]);
+  const metricsOf=(j)=>lists[j].map(idx=>mm[idx][cfgs[j].skill]);
+  const metricsWithout=(j,ex)=>lists[j].filter(idx=>idx!==ex).map(idx=>mm[idx][cfgs[j].skill]);
+  const tTok=new Array(NUM_TRIALS), tLv=new Array(NUM_TRIALS);
+  const rebuild=()=>{
+    for(let j=0;j<NUM_TRIALS;j++) lists[j].length=0;
+    for(let p=0;p<P;p++){ const j=assignment[p]; if(j>=0) lists[j].push(p); }
+    for(let j=0;j<NUM_TRIALS;j++){
+      const m=metricsOf(j);
+      tTok[j]=tokenReward(m);
+      tLv[j]=START_LV+LV_PER_PASS*simulateTrialProgress(m).passes;  // 只作剪枝参考等级
+    }
+  };
+  rebuild();
   let improved=true, guard=0;
   while(improved && guard++<500) {
     improved=false;
+    rebuild();   // 每轮重建，防止上一轮的增量更新累积误差
+    // 阶段 1：单成员移动（含 newT=-1「踢出」，即不参加任何试炼）
     for(let p=0;p<P;p++){
-      const curT=assignment[p]; const curM=curT>=0?mm[p][cfgs[curT].skill]:null;
-      let bestNew=curT, bestGain=0, bestFromLv=curT>=0?tLv[curT]:0, bestNewToLv=0;
-      const curFromLv=curT>=0?tLv[curT]:0;
+      const curT=assignment[p];
+      const fromTok=curT>=0 ? tokenReward(metricsWithout(curT,p)) : 0;  // 与 newT 无关，只算一次
+      const curFromTok=curT>=0 ? tTok[curT] : 0;
+      let bestNew=curT, bestGain=1e-9, bestToTok=0;
       for(let newT=-1;newT<NUM_TRIALS;newT++){
-        if(newT===curT)continue; let newM=null;
-        if(newT>=0){ newM=mm[p][cfgs[newT].skill]; if(newM.baseLevel<=0)continue; if(lists[newT].length>=cfgs[newT].max)continue; }
-        const newFromLv=curT>=0?finalLv(without(lists[curT],curM)):0;
-        const oldToLv=newT>=0?tLv[newT]:0; const newToLv=newT>=0?finalLv(withAdd(lists[newT],newM)):0;
-        const gain=(newFromLv-curFromLv)+(newToLv-oldToLv);
-        if(gain>bestGain){bestGain=gain;bestNew=newT;bestFromLv=newFromLv;bestNewToLv=newToLv;}
+        if(newT===curT)continue;
+        if(newT>=0){
+          const m=mm[p][cfgs[newT].skill];
+          if(m.baseLevel<=0||m.baseRatePerSecond<=0)continue;
+          if(lists[newT].length>=cfgs[newT].max)continue;
+        }
+        const toTok=newT>=0 ? tokenReward(metricsOf(newT).concat([mm[p][cfgs[newT].skill]])) : 0;
+        const gain=(fromTok-curFromTok)+(toTok-(newT>=0?tTok[newT]:0));
+        if(gain>bestGain){ bestGain=gain; bestNew=newT; bestToTok=toTok; }
       }
-      if(bestGain>0){ if(curT>=0){const l=lists[curT];const i=l.indexOf(curM);if(i>=0)l.splice(i,1);tLv[curT]=bestFromLv;} if(bestNew>=0){lists[bestNew].push(mm[p][cfgs[bestNew].skill]);tLv[bestNew]=bestNewToLv;} assignment[p]=bestNew; improved=true; }
+      if(bestNew!==curT){
+        if(curT>=0){
+          const i=lists[curT].indexOf(p); if(i<0) continue;
+          lists[curT].splice(i,1); tTok[curT]=fromTok;
+        }
+        if(bestNew>=0){ lists[bestNew].push(p); tTok[bestNew]=bestToTok; }
+        assignment[p]=bestNew; improved=true;
+      }
     }
-    for(let p=0;p<P;p++){ const tP=assignment[p];if(tP<0)continue; const mPinP=mm[p][cfgs[tP].skill];
-      for(let q=p+1;q<P;q++){ const tQ=assignment[q];if(tQ<0||tQ===tP)continue; const mQinQ=mm[q][cfgs[tQ].skill]; const mPinQ=mm[p][cfgs[tQ].skill]; const mQinP=mm[q][cfgs[tP].skill];
+    // 阶段 2：贪心两两交换 —— 初始最小费用流只按「单人在起始等级的单位时间贡献」线性分配，
+    // 忽略了人数膨胀、等级成长、成功率衰减与半层进度；这里用真实模拟逐个复核跨区交换。
+    for(let p=0;p<P;p++){
+      const tP=assignment[p]; if(tP<0)continue;
+      for(let q=p+1;q<P;q++){
+        const tQ=assignment[q]; if(tQ<0||tQ===tP)continue;
+        const mPinQ=mm[p][cfgs[tQ].skill], mQinP=mm[q][cfgs[tP].skill];
         if(mPinQ.baseLevel<=0||mQinP.baseLevel<=0)continue;
-        const newLvP=finalLv(without(lists[tP],mPinP).concat([mQinP])); const newLvQ=finalLv(without(lists[tQ],mQinQ).concat([mPinQ]));
-        const gain=(newLvP+newLvQ)-(tLv[tP]+tLv[tQ]);
-        if(gain>0){const lp=lists[tP],lq=lists[tQ];lp.splice(lp.indexOf(mPinP),1);lp.push(mQinP);lq.splice(lq.indexOf(mQinQ),1);lq.push(mPinQ);tLv[tP]=newLvP;tLv[tQ]=newLvQ;assignment[p]=tQ;assignment[q]=tP;improved=true;}
+        // 剪枝：交换不改变各区人数，难度系数不变。若在起始等级与高层两端，
+        // 「q 换进 P 区」和「p 换进 Q 区」都不让该区变快，则任何一层都不会更快，代币不可能涨。
+        // 真实 126 人数据下砍掉约 6 成模拟调用，结果完全一致。
+        const pinP=mm[p][cfgs[tP].skill], qinQ=mm[q][cfgs[tQ].skill];
+        const refHi=Math.max(tLv[tP],tLv[tQ])+LV_PER_PASS;
+        const noGainAt=(T)=>expectedRate(mQinP,T)<=expectedRate(pinP,T) && expectedRate(mPinQ,T)<=expectedRate(qinQ,T);
+        if(noGainAt(START_LV) && noGainAt(refHi))continue;
+        const newTokP=tokenReward(metricsWithout(tP,p).concat([mQinP]));
+        const newTokQ=tokenReward(metricsWithout(tQ,q).concat([mPinQ]));
+        const gain=(newTokP-tTok[tP])+(newTokQ-tTok[tQ]);
+        if(gain>1e-9){
+          const ip=lists[tP].indexOf(p), iq=lists[tQ].indexOf(q);
+          if(ip<0||iq<0) continue;
+          lists[tP].splice(ip,1); lists[tP].push(q);
+          lists[tQ].splice(iq,1); lists[tQ].push(p);
+          tTok[tP]=newTokP; tTok[tQ]=newTokQ;
+          assignment[p]=tQ; assignment[q]=tP; improved=true;
+        }
       }
     }
   }
+}
+
+// 精确复核「带上第 N 个人划不划算」：移除他后该区代币上升，就说明他的贡献
+// 抵不上人多带来的 +1% 难度，应当排除。比 r/R > 1%/(1+1%N) 的解析近似更准，
+// 因为速率随等级变化、通关层数又是离散的；这里直接用真实模拟逐个验。
+// 局部搜索阶段 1 的 newT=-1 已做同样判断，本函数作为收敛后的兜底（顺带给出名单）。
+function pruneNegativeContributions(assignment, people, cfgs, mm) {
+  const P=people.length;
+  const lists=Array.from({length:NUM_TRIALS},()=>[]);
+  const removed=[];
+  for(let round=0; round<4; round++){
+    for(let j=0;j<NUM_TRIALS;j++) lists[j].length=0;
+    for(let p=0;p<P;p++){ const j=assignment[p]; if(j>=0) lists[j].push(p); }
+    let changed=false;
+    for(let j=0;j<NUM_TRIALS;j++){
+      if(lists[j].length<2) continue;                 // 只剩一个人时踢掉会变成空区
+      const mets=lists[j].map(i=>mm[i][cfgs[j].skill]);
+      const base=tokenReward(mets);
+      let worst=-1, bestGain=0;
+      for(let k=0;k<mets.length;k++){
+        const gain=tokenReward(mets.filter((_,x)=>x!==k))-base;
+        if(gain>bestGain+1e-9){ bestGain=gain; worst=k; }
+      }
+      if(worst>=0){ removed.push(lists[j][worst]); assignment[lists[j][worst]]=-1; changed=true; }
+    }
+    if(!changed) break;
+  }
+  return removed;
 }
 
 function runAssignment(people, cfgs) {
   const mm=buildPersonMetricsMap(people);
   const assignment=initialAssignment(people,cfgs,mm);
   localSearch(assignment,people,cfgs,mm);
+  pruneNegativeContributions(assignment,people,cfgs,mm);
   const P=people.length; const assigned=Array.from({length:NUM_TRIALS},()=>[]);
   for(let p=0;p<P;p++){const j=assignment[p];if(j>=0)assigned[j].push({person:people[p],metrics:mm[p][cfgs[j].skill]});}
   let grandFinal=0,grandPasses=0,grandCount=0,grandTokens=0; const cache=new Array(NUM_TRIALS);
@@ -2099,7 +2209,17 @@ function runAssignment(people, cfgs) {
   }
   const assignedIds=new Set(); for(const l of assigned) for(const e of l) assignedIds.add(e.person.id);
   const unassigned=people.filter(p=>!assignedIds.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
-  return {cache,unassigned,grandCount,grandFinal,grandPasses,grandTokens,assignment};
+  // grandTokens 保留为「基础点数总和」（分配算法的目标，与各成员代币成正比）。
+  // 汇总栏另按官方公式换算：公会点数 / 每位符合条件成员代币 / 参与奖励。
+  const mult = guildRewardMultipliers();
+  const grandBasePoints = grandTokens;
+  const guildPoints = grandBasePoints * mult.pointsMult;
+  const memberTokens = 0.5 * grandBasePoints * mult.tokenMult;
+  const participantBonus = memberTokens * 0.5;
+  return {cache,unassigned,grandCount,grandFinal,grandPasses,grandTokens,
+    grandBasePoints,guildPoints,memberTokens,participantBonus,
+    builderLv:mult.builderLv,treasuryLv:mult.treasuryLv,
+    pointsMult:mult.pointsMult,tokenMult:mult.tokenMult,assignment};
 }
 
 // === SVG Helper ===
@@ -2244,7 +2364,7 @@ function renderTrialCards() {
       }).join('');
       resultHtml = '<div class="trial-result">'
         + t('reach')+' Lv'+c.finalLv+' &middot; '+c.passes+t('passes')+' &middot; '+c.list.length+'/'+c.max+t('people')
-          +' &middot; '+t('tokens')+': <strong>'+Math.floor(c.tokens)+'</strong><br>'
+          +' &middot; '+t('tokens')+': <strong title="'+escHtml(t('trialTokensTip'))+'">'+Math.floor(c.tokens)+'</strong><br>'
         + t('teamWork')+' '+c.sumWork+' &middot; ~'+rateStr+t('perSec')+' @ Lv'+c.finalLv+'<br>'
         + t('currentLevelNeeds')+' '+c.targetNeeds.toLocaleString()+' '+t('pts')
           +' &middot; '+t('cumulativePts')+' '+c.cumulativePts.toLocaleString()+' '+t('pts')
@@ -2775,7 +2895,25 @@ function renderSummary() {
     return;
   }
   const r = state.result;
-  bar.innerHTML = t('totalFinalLv')+': <span class="summary-num">'+r.grandFinal+'</span> | '+t('totalPasses')+': <span class="summary-num">'+r.grandPasses+'</span> | '+t('assigned')+': <span class="summary-num">'+r.grandCount+'/'+state.members.length+'</span>'+(r.unassigned.length>0 ? ' | '+t('unassigned')+': <span style="color:var(--danger)">'+r.unassigned.length+'</span>' : '');
+  // 官方口径：获得公会点数（左） / 总代币 = 每位符合条件成员的代币；悬停给出完整换算与参与奖励。
+  const base = Number(r.grandBasePoints != null ? r.grandBasePoints : r.grandTokens) || 0;
+  const gp = Number(r.guildPoints != null ? r.guildPoints : base) || 0;
+  const mt = Number(r.memberTokens != null ? r.memberTokens : 0) || 0;
+  const pb = Number(r.participantBonus != null ? r.participantBonus : 0) || 0;
+  const bLv = Number(r.builderLv) || 0, tLv = Number(r.treasuryLv) || 0;
+  const vars = {
+    base: Math.round(base), builderLv: bLv, builderPct: (bLv * GUILD_POINTS_BONUS_PER_LEVEL * 100).toFixed(0),
+    points: Math.round(gp), treasuryLv: tLv, treasuryPct: (tLv * GUILD_TOKEN_BONUS_PER_LEVEL * 100).toFixed(0),
+    member: Math.round(mt), bonus: Math.round(pb), total: Math.round(mt + pb)
+  };
+  const gpTip = escHtml(tplFill(t('guildPointsTip'), vars));
+  const tkTip = escHtml(tplFill(t('totalTokensTip'), vars));
+  bar.innerHTML = t('guildPoints')+': <span class="summary-num" title="'+gpTip+'">'+Math.round(gp)+'</span> | '
+    + t('totalTokens')+': <span class="summary-num" title="'+tkTip+'">'+Math.round(mt)+'</span> | '
+    + t('totalFinalLv')+': <span class="summary-num">'+r.grandFinal+'</span> | '
+    + t('totalPasses')+': <span class="summary-num">'+r.grandPasses+'</span> | '
+    + t('assigned')+': <span class="summary-num">'+r.grandCount+'/'+state.members.length+'</span>'
+    + (r.unassigned.length>0 ? ' | '+t('unassigned')+': <span style="color:var(--danger)">'+r.unassigned.length+'</span>' : '');
 }
 
 function renderAssignmentResults() {
