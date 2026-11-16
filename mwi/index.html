@@ -114,6 +114,18 @@ h2 { font-size:16px; margin:10px 0 8px; color:var(--text-muted); }
 .trial-max-hint { font-size:10px; color:var(--text-faint); border:1px solid var(--border); border-radius:3px; padding:1px 4px; }
 .trial-member-list { max-height:100px; overflow-y:auto; border:1px solid var(--list-border); border-radius:4px; padding:4px; background:var(--list-bg); font-size:12px; }
 .trial-member-list:empty::after { content:attr(data-empty); color:var(--text-faint); display:block; text-align:center; padding:10px; }
+/* 试炼成员列表（有表头）：成员 / 等级 / 工作量；表头固定，只有行列表滚动 */
+.trial-member-list.has-head { display:flex; flex-direction:column; max-height:none; overflow:hidden; padding:0; }
+.tml-head, .tml-row { display:grid; grid-template-columns:minmax(0,1fr) 40px 64px; align-items:center; gap:4px; }
+.tml-head { padding:3px 6px; font-size:10px; font-weight:600; color:var(--text-faint); border-bottom:1px solid var(--list-border); background:var(--table-header); }
+.tml-head .ml { color:var(--text-faint); }
+.tml-head .tml-lv, .tml-head .tml-work { text-align:right; }
+.tml-body { overflow-y:auto; max-height:96px; padding:2px 4px; }
+.tml-row { padding:2px 2px; border-radius:3px; }
+.tml-row:hover { background:var(--hover); }
+.tml-row .ml { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-muted); }
+.tml-row .tml-lv { text-align:right; color:var(--text-faint); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tml-row .tml-work { text-align:right; color:var(--accent); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .trial-member-item { padding:2px 6px; border-radius:3px; display:flex; justify-content:space-between; }
 .trial-member-item:hover { background:var(--hover); }
 .trial-member-item .ml { color:var(--text-muted); }
@@ -894,6 +906,8 @@ const I18N = {
     exportSuccess:'已导出',
     importFormatUnknown:'无法识别的 JSON：应为「本计算器导出的备份」或「游戏成员 profile 数组」',
     calculate:'计算最优分配', assignCol:'分配', nameCol:'角色名', maxMembers:'人数上限',
+    mlMember:'成员', mlLevel:'等级', mlWorkload:'工作量',
+    mlWorkloadTip:'该成员在本场试炼中按团队推进时间轴累计贡献的分数：各阶段「期望秒产出 × 该阶段耗时」之和。',
     topSkillCol:'主力专业', topSkillTip:'该成员等级最高的 3 个专业（等级 0 不列出）：技能图标 + 等级 + 该专业当前使用的工具；无工具时显示空心框。悬停可看名称与强化等级。',
     mainHandCol:'主手', mainHandTip:'主手战斗武器；悬停可看名称与强化等级。',
     noToolEquipped:'未选择工具', noMainHand:'未选择主手武器',
@@ -997,6 +1011,8 @@ const I18N = {
     exportSuccess:'Exported',
     importFormatUnknown:'Unrecognized JSON: expected a calculator backup or a members profile array',
     calculate:'Calculate', assignCol:'Assign', nameCol:'Name', maxMembers:'Max',
+    mlMember:'Member', mlLevel:'Lv', mlWorkload:'Workload',
+    mlWorkloadTip:'Score this member contributes over the trial, summed as expected points per second × time spent in each stage while the team progresses.',
     topSkillCol:'Top Skills', topSkillTip:'The 3 highest skill levels of this member (level 0 is hidden): skill icon + level + the tool currently used for that skill; an empty box means no tool. Hover for the name and enhancement level.',
     mainHandCol:'Main Hand', mainHandTip:'Main-hand combat weapon; hover for its name and enhancement level.',
     noToolEquipped:'No tool selected', noMainHand:'No main-hand weapon',
@@ -2013,6 +2029,31 @@ function estimateStageTimes(metricsList, stageCount) {
   return out;
 }
 
+// 单个成员在整场试炼里的「共享分数」：跟着团队时间轴逐级推进，
+// 累加各阶段「该成员的期望秒产出 × 团队打这一层花的时间」；最后一层没打完就按剩余时间折算。
+// 口径对齐 Chen19970809/MWI_Trial_Calculator 的 estimateFinalScoreForPerson。
+function estimatePersonScore(personMetrics, teamMetrics) {
+  if (!personMetrics || !Array.isArray(teamMetrics) || teamMetrics.length === 0) return 0;
+  const countMult = 1 + COUNT_INFLATION * teamMetrics.length;
+  let T = START_LV, passes = 0, carry = 0, timeLeft = TRIAL_DURATION, total = 0;
+  while (timeLeft > 1e-9 && passes < MAX_PASS_GUARD) {
+    let teamRate = 0;
+    for (const tm of teamMetrics) teamRate += expectedRate(tm, T);
+    if (teamRate <= 1e-9) break;
+    const personRate = expectedRate(personMetrics, T);
+    const required = (BASE_TOTAL_PT + PT_GROWTH * passes) * countMult;
+    const diff = required - carry;
+    if (diff <= 0) { carry -= required; passes++; T += LV_PER_PASS; continue; }
+    const tNeeded = diff / teamRate;
+    if (tNeeded > timeLeft + 1e-9) { total += personRate * timeLeft; break; }
+    total += personRate * tNeeded;
+    timeLeft -= tNeeded;
+    carry = carry + tNeeded * teamRate - required;
+    passes++; T += LV_PER_PASS;
+  }
+  return total;
+}
+
 function formatDuration(seconds) {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '—';
   if (seconds <= 0) return '0s';
@@ -2176,9 +2217,11 @@ function runAssignment(people, cfgs) {
   for(let p=0;p<P;p++){const j=assignment[p];if(j>=0)assigned[j].push({person:people[p],metrics:mm[p][cfgs[j].skill]});}
   let grandFinal=0,grandPasses=0,grandCount=0,grandTokens=0; const cache=new Array(NUM_TRIALS);
   for(let j=0;j<NUM_TRIALS;j++){
-    // 试炼内人员列表按「该试炼技能等级」降序（同等级按角色名，保证结果稳定）
-    const list=assigned[j]; list.sort((a,b)=> (b.metrics.baseLevel - a.metrics.baseLevel) || a.person.name.localeCompare(b.person.name,'zh-Hans-CN'));
+    // 试炼内人员列表按「该成员在本场的共享分数（工作量）」降序；同分再按技能等级、角色名，保证结果稳定
+    const list=assigned[j];
     const metricsList=list.map(e=>e.metrics);
+    for(const e of list) e.score=estimatePersonScore(e.metrics, metricsList);
+    list.sort((a,b)=> (b.score - a.score) || (b.metrics.baseLevel - a.metrics.baseLevel) || a.person.name.localeCompare(b.person.name,'zh-Hans-CN'));
     const passes=computePasses(metricsList);
     const fLv=START_LV+LV_PER_PASS*passes;
     grandFinal+=fLv; grandPasses+=passes; grandCount+=list.length;
@@ -2342,10 +2385,23 @@ function renderTrialCards() {
     let resultHtml = '';
     if (state.result && state.result.cache[j]) {
       const c = state.result.cache[j];
-      memberListHtml = c.list.map(e => {
-        const lv = Number(e.metrics && e.metrics.baseLevel != null ? e.metrics.baseLevel : e.person.levels[cfg.skill]) || 0;
-        return '<div class="trial-member-item"><span class="ml">'+escHtml(e.person.name)+'</span><span class="mr">Lv'+lv+'</span></div>';
-      }).join('');
+      if (c.list.length) {
+        const rows = c.list.map(e => {
+          const lv = Number(e.metrics && e.metrics.baseLevel != null ? e.metrics.baseLevel : e.person.levels[cfg.skill]) || 0;
+          const work = Math.round(Number(e.score) || 0);
+          return '<div class="tml-row">'
+            + '<span class="ml" title="'+escHtml(e.person.name)+'">'+escHtml(e.person.name)+'</span>'
+            + '<span class="tml-lv">Lv'+lv+'</span>'
+            + '<span class="tml-work" title="'+escHtml(t('mlWorkloadTip'))+'">'+work.toLocaleString()+'</span>'
+            + '</div>';
+        }).join('');
+        memberListHtml = '<div class="tml-head">'
+          + '<span class="ml">'+t('mlMember')+'</span>'
+          + '<span class="tml-lv">'+t('mlLevel')+'</span>'
+          + '<span class="tml-work" title="'+escHtml(t('mlWorkloadTip'))+'">'+t('mlWorkload')+'</span>'
+          + '</div>'
+          + '<div class="tml-body">'+rows+'</div>';
+      }
       // 结果文本对齐 Chen19970809/MWI_Trial_Calculator：前 3 行 —— 到达等级/通关/人数/代币、
       // 团队工作能力与期望秒产出、当前等级所需分数/累计分数/最终比例；
       // 第 4 块改成「逐阶段时间表」：100 级 → 当前最终等级 +10，每 10 级一行（阶段耗时 + 累计耗时）。
@@ -2354,7 +2410,8 @@ function renderTrialCards() {
       const stages = Array.isArray(c.stages) ? c.stages : [];
       // 逐阶段时间表：行 = 「从该等级打到 +10 的这一层」，单关 = 该层耗时，累计 = 通关该层后的总耗时。
       // 累计超过本场时长（1 小时）的行只变灰（正常情况下最后一行就是打满 1 小时到达的最终等级）。
-      const stageRows = stages.map(function(s){
+      // 倒序显示：最高阶段在最上面，往下依次回到起始等级
+      const stageRows = stages.slice().reverse().map(function(s){
         const over = (s.cum === null) || (Number(s.cum) > TRIAL_DURATION);
         return '<div class="tstage'+(over ? ' is-over' : '')+'">'
           + '<span class="tstage-lv">Lv'+s.lv+'</span>'
@@ -2383,7 +2440,7 @@ function renderTrialCards() {
       '</div>'+
       '<div class="trial-max-row"><label>'+t('maxMembers')+':</label><span class="trial-max-value">'+cfg.max+'</span>'+
         '<span class="trial-max-hint" title="'+escHtml(capHtml)+'">'+t('trialSlotsAuto')+'</span></div>'+
-      '<div class="trial-member-list" data-empty="'+t('noAssign')+'">'+memberListHtml+'</div>'+
+      '<div class="trial-member-list'+(memberListHtml ? ' has-head' : '')+'" data-empty="'+t('noAssign')+'">'+memberListHtml+'</div>'+
       resultHtml+
     '</div>';
   }).join('');
