@@ -845,7 +845,7 @@ table.member-table td.assign-cell svg { width:22px; height:22px; background:var(
     <button class="btn" id="btn-share" onclick="openShareDialog()">共享设置</button>
     <button class="btn" id="btn-import-json" onclick="importJson()">导入</button>
     <button class="btn" id="btn-export-json" onclick="exportJson()">导出</button>
-    <a href="mwi_data_export.user.js" download class="btn btn-sm" id="export-script-link" style="font-size:12px;padding:4px 8px;opacity:.6" title="">📦</a>
+    <a href="mwi_profile_export.user.js" download class="btn btn-sm" id="export-script-link" style="font-size:12px;padding:4px 8px;opacity:.6" title="">📦</a>
     <button class="btn btn-primary" id="btn-calculate" onclick="calculate()">计算最优分配</button>
   </div>
 </div>
@@ -901,10 +901,10 @@ const I18N = {
   zh: {
     title:'MWI 试炼计算器', trialConfig:'试炼配置', memberData:'成员数据',
     addMember:'添加成员', share:'共享设置', importData:'导入', exportData:'导出',
-    exportScriptTitle:'下载油猴脚本，自动采集公会成员数据导出为 JSON',
+    exportScriptTitle:'下载油猴脚本：分步采集公会成员 / 试炼三份数据（资料当前装备、生活配装、战斗配装），各自导出 JSON 后依次导入即可合并',
     exportEmpty:'暂无可导出的成员数据',
     exportSuccess:'已导出',
-    importFormatUnknown:'无法识别的 JSON：应为「本计算器导出的备份」或「游戏成员 profile 数组」',
+    importFormatUnknown:'无法识别的 JSON：应为「本计算器导出的备份」「游戏成员 profile 数组」或油猴脚本导出的三份试炼 JSON（资料当前装备 / 生活试炼配装 / 战斗试炼配装）',
     calculate:'计算最优分配', assignCol:'分配', nameCol:'角色名', maxMembers:'人数上限',
     mlMember:'成员', mlLevel:'等级', mlWorkload:'工作量',
     mlWorkloadTip:'该成员在本场试炼中按团队推进时间轴累计贡献的分数：各阶段「期望秒产出 × 该阶段耗时」之和。',
@@ -917,6 +917,7 @@ const I18N = {
     guildPoints:'获得公会点数',
     guildPointsTip:'基础点数总和 {base} × (1 + 建造者殿堂 Lv{builderLv} × 2% = +{builderPct}%) = {points}\n公会点数归公会所有，用于升级建筑与神龛。\n本计算器只模拟 4 场生活试炼；游戏每周还有 2 场战斗试炼（首层 400、之后每层 200）未计入。',
     totalTokensTip:'总代币 = 每位符合条件成员的代币：0.5 × 基础点数总和 {base} × (1 + 金库 Lv{treasuryLv} × 2% = +{treasuryPct}%) = {member}\n报名至少一场试炼的成员额外 +50% = {bonus}，合计 {total}\n各试炼卡里的「代币」是该试炼的基础点数（生活：首层 200、之后每层 100，未完成层按进度最多给一半）。',
+    trialPointsTip:'与游戏内显示口径一致：基础点数（首层 200、之后每层 100，未完成层按进度最多一半）× (1 + 建造者殿堂加成)。',
     trialTokensTip:'该试炼的基础公会点数（生活：首层 200、之后每层 100；未完成层按进度最多给一半）。汇总栏「总代币」= 0.5 × 各试炼基础点数合计 × (1 + 金库加成)。',
     unassignedTitle:'未分配成员',
     deleteBtn:'删', selectEquip:'选择装备', searchEquip:'搜索装备...',
@@ -937,7 +938,7 @@ const I18N = {
     importRepNone:'（无）',
     importDelConfirm:'确认删除?',
     teamWork:'团队工作能力', nextClearNeeds:'下1次还需', pts:'点', perSec:'点/秒',
-    reach:'到达', tokens:'代币', currentLevelNeeds:'当前等级所需分数', cumulativePts:'累计分数',
+    reach:'到达', tokens:'点数', currentLevelNeeds:'当前等级所需分数', cumulativePts:'累计分数',
     finalRatio:'最终比例', targetLevel:'通关目标', cumulativeTime:'累计', singlePassTime:'单关',
     stageLevel:'阶段',
     trial:'试炼', language:'中/EN', themeTip:'切换深色 / 浅色主题',
@@ -1006,10 +1007,10 @@ const I18N = {
   en: {
     title:'MWI Trial Calculator', trialConfig:'Trial Config', memberData:'Member Data',
     addMember:'Add Member', share:'Share', importData:'Import', exportData:'Export',
-    exportScriptTitle:'Download userscript to auto-collect guild member data as JSON',
+    exportScriptTitle:'Download userscript: collect guild roster / trial loadouts in separate steps, export each JSON and import both to merge',
     exportEmpty:'No member data to export',
     exportSuccess:'Exported',
-    importFormatUnknown:'Unrecognized JSON: expected a calculator backup or a members profile array',
+    importFormatUnknown:'Unrecognized JSON: expected a calculator backup, a members profile array, or one of the 3 trial exports (profile gear / skilling loadouts / combat loadouts)',
     calculate:'Calculate', assignCol:'Assign', nameCol:'Name', maxMembers:'Max',
     mlMember:'Member', mlLevel:'Lv', mlWorkload:'Workload',
     mlWorkloadTip:'Score this member contributes over the trial, summed as expected points per second × time spent in each stage while the team progresses.',
@@ -1022,6 +1023,7 @@ const I18N = {
     guildPoints:'Guild Points Earned',
     guildPointsTip:'Total base points {base} × (1 + Builder\'s Hall Lv{builderLv} × 2% = +{builderPct}%) = {points}\nGuild Points belong to the guild and fund buildings / shrines.\nOnly the 4 skilling trials are simulated here; the 2 weekly combat trials (400 for the first tier, 200 per extra tier) are not included.',
     totalTokensTip:'Total Tokens = payout for each eligible member: 0.5 × total base points {base} × (1 + Treasury Lv{treasuryLv} × 2% = +{treasuryPct}%) = {member}\nMembers signed up for at least one trial get a further +50% = {bonus}, for a total of {total}\nThe "Tokens" on each trial card is that trial\'s base points (skilling: 200 for the first tier, 100 per extra tier; an unfinished tier pays up to half).',
+    trialPointsTip:'Same as in-game display: base points (200 for the first tier, 100 per extra tier, unfinished tier pays up to half) × (1 + Builder\'s Hall bonus).',
     trialTokensTip:'Base Guild Points from this trial (skilling: 200 for the first tier, 100 per extra tier; an unfinished tier pays up to half). Summary "Total Tokens" = 0.5 × sum of all trials\' base points × (1 + Treasury bonus).',
     unassignedTitle:'Unassigned members',
     deleteBtn:'Del', selectEquip:'Select Equipment', searchEquip:'Search equipment...',
@@ -1042,7 +1044,7 @@ const I18N = {
     importRepNone:'(none)',
     importDelConfirm:'Delete?',
     teamWork:'Team Work', nextClearNeeds:'Next clear needs', pts:'pts', perSec:'pts/s',
-    reach:'Reach', tokens:'Tokens', currentLevelNeeds:'Current level needs', cumulativePts:'Cumulative score',
+    reach:'Reach', tokens:'Points', currentLevelNeeds:'Current level needs', cumulativePts:'Cumulative score',
     finalRatio:'Final ratio', targetLevel:'Clear Target', cumulativeTime:'Total', singlePassTime:'This pass',
     stageLevel:'Stage',
     trial:'Trial', language:'中/EN', themeTip:'Toggle dark / light theme',
@@ -1184,8 +1186,9 @@ const EMBEDDED_CLIENT_DATA = {"houseRoomDetailMap": {"/house_rooms/archery_range
 const TRIAL_DURATION = 3600, START_LV = 100, LV_PER_PASS = 10, COUNT_INFLATION = 0.01;
 const BASE_ACTION_SEC = 10, SUCCESS_BASE = 0.80, SUCCESS_BELOW = 0.01, SUCCESS_ABOVE = 0.005, SUCCESS_MIN = 0.05;
 const BASE_TOTAL_PT = 40000, PT_GROWTH = 4000, MAX_PASS_GUARD = 10000, NUM_TRIALS = 4;
-// 公会建筑加成（官网页面未公开每级系数；沿用 Chen19970809/MWI_Trial_Calculator 中 builder 的 2%/级口径）：
-// 建造者殿堂 → 公会点数；金库 → 公会代币。改这里即可换成官方实测值。
+// 公会建筑加成：建造者殿堂 → 公会点数 +2%/级；金库 → 公会代币 +2%/级。
+// （用户确认建造者殿堂就是 +2%/级；此前拟合出的 1.75%/级是因为速率端漏乘了全局加成、
+//  把缺口错摊到殿堂系数上。金库 +2%/级由 5142 代币回推 1+1×0.02=1.02 精确吻合。）
 const GUILD_POINTS_BONUS_PER_LEVEL = 0.02, GUILD_TOKEN_BONUS_PER_LEVEL = 0.02;
 
 const EQUIP_ICONS = {
@@ -1782,6 +1785,12 @@ function applyTrialCaps() {
   const cap = skillingTrialCap();
   for (const cfg of state.trials) { cfg.max = cap; }
 }
+// 试炼配置自愈：槽位数不对 / skill 越界（如导入脏数据后残留）→ 重建为默认 4 科。
+function sanitizeTrials() {
+  const valid = Array.isArray(state.trials) && state.trials.length === NUM_TRIALS
+    && state.trials.every(function(c){ return c && Number.isInteger(c.skill) && c.skill >= 0 && c.skill < SKILL_KEYS.length; });
+  if (!valid) state.trials = [{skill:0,max:20},{skill:1,max:20},{skill:2,max:20},{skill:3,max:20}];
+}
 // === 个人神龛（5 座 × 生活/战斗 = 10 个槽位，成员级个人持久化数据）===
 // 生活变体计入生活试炼推演（仅 力量=效率、节奏=动作速度）；
 // 战斗变体为后续战斗试炼预留，不并入 combined（由 computeCombatBonuses 聚合）。
@@ -2216,6 +2225,8 @@ function runAssignment(people, cfgs) {
   const P=people.length; const assigned=Array.from({length:NUM_TRIALS},()=>[]);
   for(let p=0;p<P;p++){const j=assignment[p];if(j>=0)assigned[j].push({person:people[p],metrics:mm[p][cfgs[j].skill]});}
   let grandFinal=0,grandPasses=0,grandCount=0,grandTokens=0; const cache=new Array(NUM_TRIALS);
+  // 建造者殿堂 / 金库倍率：每场试炼的「点数」按游戏口径（基础 × pointsMult）显示，与游戏内数字可直接对照
+  const mult = guildRewardMultipliers();
   for(let j=0;j<NUM_TRIALS;j++){
     // 试炼内人员列表按「该成员在本场的共享分数（工作量）」降序；同分再按技能等级、角色名，保证结果稳定
     const list=assigned[j];
@@ -2248,13 +2259,10 @@ function runAssignment(people, cfgs) {
     const stageCount = Math.max(1, Math.round((fLv - START_LV) / LV_PER_PASS) + 1);
     const stages = estimateStageTimes(metricsList, stageCount);
     cache[j]={list,sum,passes,finalLv:fLv,reqNext,sumWork,rateAtFinal,max:cfgs[j].max,skill:cfgs[j].skill,
-      tokens,targetNeeds,cumulativePts,finalRatio,stages};
+      tokens,targetNeeds,cumulativePts,finalRatio,stages,pointsMult:mult.pointsMult};
   }
   const assignedIds=new Set(); for(const l of assigned) for(const e of l) assignedIds.add(e.person.id);
   const unassigned=people.filter(p=>!assignedIds.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
-  // grandTokens 保留为「基础点数总和」（分配算法的目标，与各成员代币成正比）。
-  // 汇总栏另按官方公式换算：公会点数 / 每位符合条件成员代币 / 参与奖励。
-  const mult = guildRewardMultipliers();
   const grandBasePoints = grandTokens;
   const guildPoints = grandBasePoints * mult.pointsMult;
   const memberTokens = 0.5 * grandBasePoints * mult.tokenMult;
@@ -2421,7 +2429,8 @@ function renderTrialCards() {
       }).join('');
       resultHtml = '<div class="trial-result">'
         + t('reach')+' Lv'+c.finalLv+' &middot; '+c.passes+t('passes')+' &middot; '+c.list.length+'/'+c.max+t('people')
-          +' &middot; '+t('tokens')+': <strong title="'+escHtml(t('trialTokensTip'))+'">'+Math.floor(c.tokens)+'</strong><br>'
+          +' &middot; '+t('tokens')+': <strong title="'+escHtml(t('trialPointsTip'))+'">'+Math.round(c.tokens * c.pointsMult)
+          +'</strong><span style="color:var(--text-faint);font-size:11px" title="'+escHtml(t('trialTokensTip'))+'">（基础 '+Math.floor(c.tokens)+'）</span><br>'
         + t('teamWork')+' '+c.sumWork+' &middot; ~'+rateStr+t('perSec')+' @ Lv'+c.finalLv+'<br>'
         + t('currentLevelNeeds')+' '+c.targetNeeds.toLocaleString()+' '+t('pts')
           +' &middot; '+t('cumulativePts')+' '+c.cumulativePts.toLocaleString()+' '+t('pts')
@@ -3443,6 +3452,7 @@ function updateMemberAchievement(id, key, checked) {
 function calculate() {
   if (state.members.length === 0) { alert(t('addMembersFirst')); return; }
   const t0 = performance.now();
+  sanitizeTrials();   // 防止脏数据（如早期 roster 导入崩溃残留）让推演崩在 undefined
   applyTrialCaps();   // 试炼人数上限由生活营地等级派生
   state.result = runAssignment(state.members, state.trials);
   state.assignment = state.result.assignment;
@@ -3558,9 +3568,97 @@ function exportJson() {
 // 判断一份已解析的 JSON 是不是「本计算器的备份」。
 // 认两种写法：① 带 _format 标记；② 直接形如 sharedPayload（含 members 数组）——
 // 方便把共享 bin 里的裸载荷直接拷出来导入。
+// 注意：members 数组不是充分条件——试炼配装导出（mwi-trial-roster）等其他格式也带 members，
+// 但里面是游戏原始 profile，不能按备份还原。裸载荷必须成员本身长得像计算器成员（带 levels 数组）。
 function isCalculatorDump(obj) {
-  return !!obj && !Array.isArray(obj) && (obj._format === EXPORT_FORMAT || Array.isArray(obj.members));
+  if (!obj || Array.isArray(obj)) return false;
+  if (obj._format === EXPORT_FORMAT) return true;
+  if (obj._format) return false;                       // 其他已知格式一律不认
+  if (!Array.isArray(obj.members) || !obj.members.length) return false;
+  const m0 = obj.members[0];
+  return !!m0 && typeof m0 === 'object' && typeof m0.name === 'string' && Array.isArray(m0.levels);
 }
+
+// 配装导出脚本（mwi_profile_export.user.js）的花名册格式：
+//   { _format:'mwi-trial-roster', guild:{name,id}, guildBuildingLevelMap:{hrid:lv},
+//     trials:[{key,label,signup,members:[名字]...}], members:[原始 profile_shared.profile...] }
+// members 是游戏原始 profile（不是计算器成员结构），trials 是试炼描述（不是 {skill,max} 配置）。
+const ROSTER_FORMAT = 'mwi-trial-roster';
+// 试炼配装导出（脚本 ②③）：成员是 loadout_shared。
+//   生活试炼配装 mwi-skilling-loadouts → 挂到成员 skillingLoadout 字段（23 槽带技能工具）
+//   战斗试炼配装 mwi-combat-loadouts  → 挂到成员 combatLoadout 字段（13 通用槽 + 技能/消耗品）
+// 与 profile（资料当前装备）是同一个人的不同数据，按名字合并，互不覆盖。
+const SKILLING_LOADOUT_FORMAT = 'mwi-skilling-loadouts';
+const COMBAT_LOADOUT_FORMAT = 'mwi-combat-loadouts';
+function isTrialRosterDump(obj) {
+  return !!obj && !Array.isArray(obj) && obj._format === ROSTER_FORMAT && Array.isArray(obj.members);
+}
+function isSkillingLoadoutDump(obj) {
+  return !!obj && !Array.isArray(obj) && obj._format === SKILLING_LOADOUT_FORMAT && Array.isArray(obj.members);
+}
+function isCombatLoadoutDump(obj) {
+  return !!obj && !Array.isArray(obj) && obj._format === COMBAT_LOADOUT_FORMAT && Array.isArray(obj.members);
+}
+
+// 把 loadout_shared 归一化成计算器可存的配装子对象（不参与生活试炼计算，仅留存）。
+// actionTypeHrid 缺省值按 kind 定：生活档 /action_types/milking，战斗档 /action_types/combat。
+function normalizeLoadout(lo, kind) {
+  if (!lo || typeof lo !== 'object') return null;
+  const name = (lo.sharableCharacter && lo.sharableCharacter.name)
+    || (lo.character && lo.character.name) || '';
+  if (!name) return null;
+  const defaultAction = kind === 'combat' ? '/action_types/combat' : '/action_types/milking';
+  const out = { name: String(name), actionTypeHrid: String(lo.actionTypeHrid || defaultAction) };
+  out.hasLoadout = lo.hasLoadout !== false;   // hasLoadout=false：空配装，照样保留
+  out.wearableItemMap = (lo.wearableItemMap && typeof lo.wearableItemMap === 'object') ? lo.wearableItemMap : {};
+  out.combatConsumables = Array.isArray(lo.combatConsumables) ? lo.combatConsumables : [];
+  const abilities = lo.equippedAbilities || lo.equipmentAbilities || [];
+  out.equippedAbilities = Array.isArray(abilities) ? abilities.filter(function(a){ return a && a.abilityHrid; }) : [];
+  out.abilityCombatTriggersMap = (lo.abilityCombatTriggersMap && typeof lo.abilityCombatTriggersMap === 'object') ? lo.abilityCombatTriggersMap : {};
+  out.consumableCombatTriggersMap = (lo.consumableCombatTriggersMap && typeof lo.consumableCombatTriggersMap === 'object') ? lo.consumableCombatTriggersMap : {};
+  return out;
+}
+
+// 试炼配装按角色名合并进现有成员：已有成员 → 挂到 field 指定字段；没有则新建占位成员。
+// 只写那一个字段，绝不动 levels/equipment/shrines —— 三份数据互不覆盖。
+function mergeLoadouts(dump, field, kind) {
+  const list = (dump.members || []).map(function(lo){ return normalizeLoadout(lo, kind); }).filter(Boolean);
+  if (!list.length) return null;
+  const byName = {};
+  for (const m of state.members) {
+    const k = String(m.name || '').trim();
+    if (k && byName[k] === undefined) byName[k] = m;
+  }
+  let nextId = 0;
+  for (const m of state.members) nextId = Math.max(nextId, (Number(m.id) || 0) + 1);
+  const seen = {};
+  let updated = 0, added = 0;
+  const addedNames = [];
+  const label = kind === 'combat' ? '战斗配装' : '生活配装';
+  for (const lo of list) {
+    const k = String(lo.name).trim();
+    if (seen[k]) continue;
+    seen[k] = true;
+    const old = byName[k];
+    if (old) {
+      old[field] = lo;
+      old._ts = Date.now();
+      updated++;
+    } else {
+      // 只在这类试炼出现、没报别处的人 → 建占位成员（levels 全 0，不参与计算），保留配装
+      const fresh = restoreMemberDump({ name: k });
+      fresh.id = nextId++;
+      fresh[field] = lo;
+      state.members.push(fresh);
+      added++;
+      addedNames.push(k);
+    }
+  }
+  return { updated: updated, added: added, addedNames: addedNames, keptNames: [], label: label };
+}
+
+function mergeCombatLoadouts(dump) { return mergeLoadouts(dump, 'combatLoadout', 'combat'); }
+function mergeSkillingLoadouts(dump) { return mergeLoadouts(dump, 'skillingLoadout', 'skilling'); }
 
 // 还原单个成员：备份里的成员已是计算器结构，这里只补齐字段 / 夹取取值范围（幂等）。
 function restoreMemberDump(m) {
@@ -3603,6 +3701,7 @@ function importCalculatorDump(dump) {
     state.guildBuildingsTs = Number(src.guildBuildingsTs) || Date.now();
   }
   applyTrialCaps();
+  sanitizeTrials();
   state.members.forEach(normalizeMemberEquip);
   return { count: state.members.length, stat: stat };
 }
@@ -3792,6 +3891,58 @@ function importJson() {
       let parsed;
       try { parsed = JSON.parse(reader.result); }
       catch(e) { alert('JSON parse error: ' + e.message); return; }
+
+      // ⓪ 试炼配装导出（mwi-trial-roster）→ 成员是原始 profile，走 profile 合并路径；
+      //    试炼名单只是「谁报了哪场」的描述，计算器的试炼配置（{skill,max}）不动。
+      //    必须排在校验备份之前——它的 members 数组会被误判成计算器备份（真实事故：
+      //    试炼配置被冲成花名册描述 → cfgs[j].skill 为 undefined → initialAssignment 崩）。
+      if (isTrialRosterDump(parsed)) {
+        const stat = mergeMembersFromProfiles(parsed.members);
+        if (!stat) { alert(t('importFailed')); return; }
+        if (parsed.guild && parsed.guild.name && !state.guild) state.guild = String(parsed.guild.name);
+        state.deletedIds = [];
+        if (parsed.guildBuildingLevelMap) applyImportedGuildBuildings([parsed]);
+        // 本周试炼科目直接来自 roster（key 为生活技能 id；trial_* 是战斗试炼，跳过）。
+        // 手工设置容易拿着上周的科目算（真实事故：默认科目是挤奶/采摘/木砍/奶酪，
+        // 而本周是挤奶/采摘/缝纫/强化），这里自动同步；人数上限仍由营地等级派生。
+        const skillKeys = (parsed.trials || []).map(function(x){ return String(x && x.key || ''); })
+          .filter(function(k){ return SKILL_KEYS.indexOf(k) >= 0; });
+        if (skillKeys.length === NUM_TRIALS) {
+          state.trials = skillKeys.map(function(k){ return { skill: SKILL_KEYS.indexOf(k), max: 0 }; });
+        } else {
+          sanitizeTrials();   // 科目数量异常（或历史脏数据）→ 至少保证配置合法
+        }
+        applyTrialCaps();
+        await persistAfterImport();
+        renderAll();
+        if (state.members.length > 0) calculate();
+        showImportReport(stat);
+        return;
+      }
+
+      // ⓪a 生活试炼配装导出（mwi-skilling-loadouts）→ 按名字挂到成员的 skillingLoadout 字段。
+      //     与资料档 profile / 战斗档是同一个人的不同数据，三份互不覆盖；试炼配置不动。
+      if (isSkillingLoadoutDump(parsed)) {
+        const stat = mergeSkillingLoadouts(parsed);
+        if (!stat) { alert(t('importFailed')); return; }
+        if (parsed.guildBuildingLevelMap) applyImportedGuildBuildings([parsed]);
+        await persistAfterImport();
+        renderAll();
+        showImportReport(stat);
+        return;
+      }
+
+      // ⓪b 战斗配装导出（mwi-combat-loadouts）→ 按名字把 loadout 挂到成员的 combatLoadout 字段。
+      //     与 roster（资料当前装备）是同一个人的两套配装，互不覆盖；试炼配置不动。
+      if (isCombatLoadoutDump(parsed)) {
+        const stat = mergeCombatLoadouts(parsed);
+        if (!stat) { alert(t('importFailed')); return; }
+        if (parsed.guildBuildingLevelMap) applyImportedGuildBuildings([parsed]);
+        await persistAfterImport();
+        renderAll();
+        showImportReport(stat);
+        return;
+      }
 
       // ① 本计算器导出的备份 → 还原试炼 / 公会建筑 / 公会名；成员按角色名并集合并
       if (isCalculatorDump(parsed)) {
