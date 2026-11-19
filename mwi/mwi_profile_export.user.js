@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MWI 采集器 / 成员资料 · 生活配装 · 战斗配装
 // @namespace    https://www.milkywayidle.com/
-// @version      3.0.4
+// @version      3.0.5
 // @description  MWI Trial Calculator capture: member profiles, skilling loadouts, combat loadouts. Three buttons, real UI clicks, three JSON exports.
 // @description:zh-CN 三条链路，全部模拟真人依次点击：① 成员页采「资料」② 试炼页采「查看配装·生活」③ 试炼页采「查看配装·战斗」。各自导出 JSON，计算器依次导入。
 // @author       Guild Tools
@@ -34,7 +34,7 @@
 (function () {
     'use strict';
 
-    const SCRIPT_VERSION = '3.0.4';
+    const SCRIPT_VERSION = '3.0.5';
     const STORAGE_KEY = 'mwi-trial-export:v1';
 
     const T = {
@@ -80,6 +80,11 @@
     };
 
     // ── 小工具 ────────────────────────────────────────────────
+    // 采集面板只在公会页（成员页 / 试炼页）显示，其余页面隐藏。
+    // 游戏是 SPA，公会面板动态出现/消失，用 GuildPanel_* 类名判断。
+    function isOnGuildPage() {
+        return !!document.querySelector('[class*="GuildPanel_membersTable"], [class*="GuildPanel_trialTile"], [class*="GuildPanel_signupModal"]');
+    }
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
     const stepDelay = () => sleep(randInt(T.step, T.step + 140));
@@ -230,7 +235,7 @@
 
         // 拿 socket 引用 + 剥离脚本合成点击带来的 isAuto 标记。
         //
-        // 关键（v3.0.4 真机验证）：油猴脚本用 el.click() 是「不可信事件」(isTrusted=false)，
+        // 关键：油猴脚本用 el.click() 是「不可信事件」(isTrusted=false)，
         // 游戏前端会据此在 view_loadout / view_profile 请求里加 `isAuto:true`；服务端收到
         // 该标记后【不返回】loadout_shared / profile_shared，导致「点了却什么也采不到」。
         // 真人鼠标点击不带 isAuto、有回包。这里在发送前把 isAuto 删掉，等同于真人请求：
@@ -748,6 +753,16 @@
         document.body.appendChild(wrap);
         state.panel = wrap;
 
+        // 只在公会页显示：游戏是 SPA，公会面板动态出现/消失，用 MutationObserver 防抖跟踪显隐。
+        const syncVisibility = () => { wrap.style.display = isOnGuildPage() ? '' : 'none'; };
+        let visTimer = null;
+        const visObserver = new MutationObserver(() => {
+            if (visTimer) return;
+            visTimer = setTimeout(() => { visTimer = null; syncVisibility(); }, 300);
+        });
+        visObserver.observe(document.body, { childList: true, subtree: true });
+        syncVisibility();
+
         wrap.addEventListener('click', (e) => {
             const t = e.target;
             if (t?.classList?.contains('mc-min')) {
@@ -765,27 +780,39 @@
             else if (act === 'combat') runTrialLoadouts('combat');
             else if (act === 'stop') { state.stop = true; uiStatus('正在停止…', 'warn'); }
         });
-        ['pointerdown', 'mousedown', 'mouseup'].forEach((ev) => wrap.addEventListener(ev, (e) => {
+        // 阻止面板内指针/鼠标事件冒泡到游戏，避免误触游戏操作。
+        // 注意：不能拦 mouseup/pointerup —— 拖拽结束依赖 window 捕获阶段的 up 事件；
+        // 这里只拦 pointerdown/mousedown（游戏主要响应按下），松开事件一律放行。
+        ['pointerdown', 'mousedown'].forEach((ev) => wrap.addEventListener(ev, (e) => {
             if (e.target?.closest?.('input')) return;
             e.stopPropagation();
         }));
 
-        // 标题栏拖拽
+        // 标题栏拖拽：用 pointer 事件 + window 捕获监听，保证鼠标移出面板后松开也能收到 up。
+        // 之前用 document 冒泡监听，但面板 stopPropagation 了 mouseup，导致 drag 永远清不掉 → 拖不停。
         const head = wrap.querySelector('.mc-head');
         let drag = null;
-        head.addEventListener('mousedown', (e) => {
+        const endDrag = () => { drag = null; };
+        head.addEventListener('pointerdown', (e) => {
             if (e.target.classList.contains('mc-min')) return;
+            if (e.button !== 0) return;            // 只响应主键
             const r = wrap.getBoundingClientRect();
             drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
             wrap.style.right = 'auto'; wrap.style.bottom = 'auto';
             wrap.style.left = r.left + 'px'; wrap.style.top = r.top + 'px';
+            e.preventDefault();
         });
-        document.addEventListener('mousemove', (e) => {
+        // 捕获阶段挂在 window 上，先于任何冒泡阶段的 stopPropagation 执行。
+        window.addEventListener('pointermove', (e) => {
             if (!drag) return;
             wrap.style.left = Math.max(0, e.clientX - drag.dx) + 'px';
             wrap.style.top = Math.max(0, e.clientY - drag.dy) + 'px';
-        });
-        document.addEventListener('mouseup', () => { drag = null; });
+        }, true);
+        window.addEventListener('pointerup', endDrag, true);
+        // 兜底：指针被系统取消、窗口失焦、鼠标移出浏览器窗口时也要结束拖拽。
+        window.addEventListener('pointercancel', endDrag, true);
+        window.addEventListener('blur', endDrag);
+        document.addEventListener('mouseleave', endDrag);
     }
 
     function clearCache() {

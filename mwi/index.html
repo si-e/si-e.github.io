@@ -1143,6 +1143,7 @@ function globalBuffPct(lv) {
   lv = Number(lv) || 0;
   return lv > 0 ? (GLOBAL_BUFF_BASE + GLOBAL_BUFF_PER_LEVEL * lv) : 0;
 }
+const EQUIP_LEVELS = {"abyssal_essence":80,"acrobatic_hood":95,"acrobatic_hood_refined":95,"acrobats_ribbon":95,"advanced_alchemy_charm":40,"advanced_attack_charm":40,"advanced_brewing_charm":40,"advanced_cheesesmithing_charm":40,"advanced_cooking_charm":40,"advanced_crafting_charm":40,"advanced_defense_charm":40,"advanced_enhancing_charm":40,"advanced_foraging_charm":40,"advanced_intelligence_charm":40,"advanced_magic_charm":40,"advanced_melee_charm":40,"advanced_milking_charm":40,"advanced_ranged_charm":40,"advanced_stamina_charm":40,"advanced_tailoring_charm":40,"advanced_task_badge":30,"advanced_woodcutting_charm":40,"alchemists_bottoms":90,"alchemists_top":90,"alchemy_essence":1,"alchemy_tea":10,"amber":25,"amethyst":40,"anchorbound_plate_body":95,"anchorbound_plate_body_refined":95,"anchorbound_plate_legs":95,"anchorbound_plate_legs_refined":95,"apple":10,"apple_gummy":10,"apple_yogurt":10,"aqua_arrow":20,"aqua_essence":10,"arabica_coffee_bean":10,"arcane_bow":80,"arcane_crossbow":80,"arcane_fire_staff":80,"arcane_log":80,"arcane_lumber":80,"arcane_nature_staff":80,"arcane_shield":80,"arcane_water_staff":80,"artificer_cape":80,"artificer_cape_refined":80,"artisan_tea":75,"attack_coffee":10,"azure_alembic":20,"azure_boots":20,"azure_brush":20,"azure_buckler":20,"azure_bulwark":20,"azure_cheese":20,"azure_chisel":20,"azure_enhancer":20,"azure_gauntlets":20,"azure_hammer":20,"azure_hatchet":20,"azure_helmet":20,"azure_mace":20,"azure_milk":20,"azure_needle":20,"azure_plate_body":20,"azure_plate_legs":20,"azure_pot":20,"azure_shears":20,"azure_spatula":20,"azure_spear":20,"azure_sword":20,"bamboo_boots":35,"bamboo_branch":35,"bamboo_fabric":35,"bamboo_gloves":35,"bamboo_hat":35,"bamboo_robe_bottoms":35,"bamboo_robe_top":35,"basic_alchemy_charm":20,"basic_attack_charm":20,"basic_brewing_charm":20,"basic_cheesesmithing_charm":20,"basic_cooking_charm":20,"basic_crafting_charm":20,"basic_defense_charm":20,"basic_enhancing_charm":20,"basic_foraging_charm":20,"basic_intelligence_charm":20,"basic_magic_charm":20,"basic_melee_charm":20,"basic_milking_charm":20,"basic_ranged_charm":20,"basic_stamina_charm":20,"basic_tailoring_charm":20,"basic_task_badge":1,"basic_woodcutting_charm":20,"bear_essence":65,"beast_boots":55,"beast_bracers":55,"beast_chaps":55,"beast_hide":55,"beast_hood":55,"beast_leather":55,"beast_tunic":55,"berserk":40,"birch_bow":10,"birch_crossbow":10,"birch_fire_staff":10,"birch_log":10,"birch_lumber":10,"birch_nature_staff":10,"birch_shield":10,"birch_water_staff":10,"bishops_codex":95,"bishops_codex_refined":95,"bishops_scroll":95,"black_bear_fluff":65,"black_bear_shoes":65,"black_tea_leaf":20,"blackberry":20,"blackberry_cake":20,"blackberry_donut":20,"blazing_trident":95,"blazing_trident_refined":95,"blessed_tea":75,"blooming_trident":95,"blooming_trident_refined":95,"blue_key_fragment":55,"blueberry":10,"blueberry_cake":10,"blueberry_donut":10,"branch_of_insight":90,"brewers_bottoms":90,"brewers_top":90,"brewing_essence":1,"brewing_tea":10,"brown_key_fragment":70,"burble_alembic":35,"burble_boots":35,"burble_brush":35,"burble_buckler":35,"burble_bulwark":35,"burble_cheese":35,"burble_chisel":35,"burble_enhancer":35,"burble_gauntlets":35,"burble_hammer":35,"burble_hatchet":35,"burble_helmet":35,"burble_mace":35,"burble_milk":35,"burble_needle":35,"burble_plate_body":35,"burble_plate_legs":35,"burble_pot":35,"burble_shears":35,"burble_spatula":35,"burble_spear":35,"burble_sword":35,"burble_tea_leaf":35,"burning_key_fragment":85,"butter_of_proficiency":90,"catalyst_of_coinification":40,"catalyst_of_decomposition":50,"catalyst_of_transmutation":60,"catalytic_tea":75,"cedar_bow":20,"cedar_crossbow":20,"cedar_fire_staff":20,"cedar_log":20,"cedar_lumber":20,"cedar_nature_staff":20,"cedar_shield":20,"cedar_water_staff":20,"celestial_alembic":90,"celestial_brush":90,"celestial_chisel":90,"celestial_enhancer":90,"celestial_hammer":90,"celestial_hatchet":90,"celestial_needle":90,"celestial_pot":90,"celestial_shears":90,"celestial_spatula":90,"centaur_boots":65,"centaur_hoof":65,"chance_cape":80,"chance_cape_refined":80,"channeling_coffee":60,"chaotic_chain":95,"chaotic_flail":95,"chaotic_flail_refined":95,"cheese":1,"cheese_alembic":1,"cheese_boots":1,"cheese_brush":1,"cheese_buckler":1,"cheese_bulwark":1,"cheese_chisel":1,"cheese_enhancer":1,"cheese_gauntlets":1,"cheese_hammer":1,"cheese_hatchet":1,"cheese_helmet":1,"cheese_mace":1,"cheese_needle":1,"cheese_plate_body":1,"cheese_plate_legs":1,"cheese_pot":1,"cheese_shears":1,"cheese_spatula":1,"cheese_spear":1,"cheese_sword":1,"cheesemakers_bottoms":90,"cheesemakers_top":90,"cheesesmithing_essence":1,"cheesesmithing_tea":20,"chefs_bottoms":90,"chefs_top":90,"chimerical_chest_key":95,"chimerical_entry_key":95,"chimerical_essence":95,"chimerical_quiver":80,"chimerical_quiver_refined":80,"chimerical_refinement_shard":95,"chrono_gloves":80,"chrono_sphere":80,"cleave":20,"cocoon":50,"collectors_boots":60,"colossus_core":85,"colossus_plate_body":85,"colossus_plate_legs":85,"cooking_essence":1,"cooking_tea":10,"corsair_crest":95,"corsair_helmet":95,"corsair_helmet_refined":95,"cotton":1,"cotton_boots":1,"cotton_fabric":1,"cotton_gloves":1,"cotton_hat":1,"cotton_robe_bottoms":1,"cotton_robe_top":1,"crab_pincer":25,"crafters_bottoms":90,"crafters_top":90,"crafting_essence":1,"crafting_tea":20,"crimson_alembic":50,"crimson_boots":50,"crimson_brush":50,"crimson_buckler":50,"crimson_bulwark":50,"crimson_cheese":50,"crimson_chisel":50,"crimson_enhancer":50,"crimson_gauntlets":50,"crimson_hammer":50,"crimson_hatchet":50,"crimson_helmet":50,"crimson_mace":50,"crimson_milk":50,"crimson_needle":50,"crimson_plate_body":50,"crimson_plate_legs":50,"crimson_pot":50,"crimson_shears":50,"crimson_spatula":50,"crimson_spear":50,"crimson_sword":50,"crippling_slash":60,"critical_aura":40,"critical_coffee":75,"crushed_amber":25,"crushed_amethyst":40,"crushed_garnet":40,"crushed_jade":40,"crushed_moonstone":55,"crushed_pearl":10,"crushed_philosophers_stone":90,"crushed_sunstone":70,"culinary_cape":80,"culinary_cape_refined":80,"cupcake":1,"cursed_ball":95,"cursed_bow":95,"cursed_bow_refined":95,"dairyhands_bottoms":90,"dairyhands_top":90,"damaged_anchor":95,"dark_key_fragment":85,"defense_coffee":10,"demonic_core":85,"demonic_plate_body":85,"demonic_plate_legs":85,"dodocamel_gauntlets":95,"dodocamel_gauntlets_refined":95,"dodocamel_plume":95,"donut":1,"dragon_fruit":65,"dragon_fruit_gummy":65,"dragon_fruit_yogurt":65,"earrings_of_armor":45,"earrings_of_critical_strike":75,"earrings_of_essence_find":30,"earrings_of_gathering":15,"earrings_of_rare_find":60,"earrings_of_regeneration":45,"earrings_of_resistance":45,"efficiency_tea":60,"egg":1,"elemental_affinity":40,"elusiveness":60,"emp_tea_leaf":80,"enchanted_chest_key":95,"enchanted_cloak":80,"enchanted_cloak_refined":80,"enchanted_entry_key":95,"enchanted_essence":95,"enchanted_gloves":60,"enchanted_refinement_shard":95,"enhancers_bottoms":90,"enhancers_top":90,"enhancing_essence":1,"enhancing_tea":10,"entangle":1,"excelsa_coffee_bean":50,"expert_alchemy_charm":60,"expert_attack_charm":60,"expert_brewing_charm":60,"expert_cheesesmithing_charm":60,"expert_cooking_charm":60,"expert_crafting_charm":60,"expert_defense_charm":60,"expert_enhancing_charm":60,"expert_foraging_charm":60,"expert_intelligence_charm":60,"expert_magic_charm":60,"expert_melee_charm":60,"expert_milking_charm":60,"expert_ranged_charm":60,"expert_stamina_charm":60,"expert_tailoring_charm":60,"expert_task_badge":60,"expert_woodcutting_charm":60,"eye_of_the_watcher":70,"eye_watch":60,"eyessence":50,"fierce_aura":40,"fieriosa_coffee_bean":65,"fighter_necklace":45,"fireball":1,"firestorm":50,"flame_arrow":20,"flame_blast":20,"flaming_cloth":50,"flaming_robe_bottoms":50,"flaming_robe_top":50,"flax":10,"fluffy_red_hat":80,"foragers_bottoms":90,"foragers_top":90,"foraging_essence":1,"foraging_tea":1,"fracturing_impact":60,"frenzy":60,"frost_sphere":85,"frost_staff":85,"frost_surge":50,"furious_spear":95,"furious_spear_refined":95,"garnet":40,"gatherer_cape":80,"gatherer_cape_refined":80,"gathering_tea":10,"gator_vest":20,"giant_pouch":60,"ginkgo_bow":50,"ginkgo_crossbow":50,"ginkgo_fire_staff":50,"ginkgo_log":50,"ginkgo_lumber":50,"ginkgo_nature_staff":50,"ginkgo_shield":50,"ginkgo_water_staff":50,"gluttonous_energy":90,"gluttonous_pouch":90,"gobo_boomstick":40,"gobo_boots":35,"gobo_bracers":35,"gobo_chaps":35,"gobo_defender":60,"gobo_essence":35,"gobo_hide":35,"gobo_hood":35,"gobo_leather":35,"gobo_rag":60,"gobo_shooter":40,"gobo_slasher":40,"gobo_smasher":40,"gobo_stabber":40,"gobo_tunic":35,"goggles":55,"golem_essence":80,"gourmet_tea":20,"grandmaster_alchemy_charm":100,"grandmaster_attack_charm":100,"grandmaster_brewing_charm":100,"grandmaster_cheesesmithing_charm":100,"grandmaster_cooking_charm":100,"grandmaster_crafting_charm":100,"grandmaster_defense_charm":100,"grandmaster_enhancing_charm":100,"grandmaster_foraging_charm":100,"grandmaster_intelligence_charm":100,"grandmaster_magic_charm":100,"grandmaster_melee_charm":100,"grandmaster_milking_charm":100,"grandmaster_ranged_charm":100,"grandmaster_stamina_charm":100,"grandmaster_tailoring_charm":100,"grandmaster_woodcutting_charm":100,"granite_bludgeon":85,"green_key_fragment":55,"green_tea_leaf":10,"griffin_bulwark":95,"griffin_bulwark_refined":95,"griffin_chaps":85,"griffin_leather":85,"griffin_talon":95,"griffin_tunic":85,"grizzly_bear_fluff":65,"grizzly_bear_shoes":65,"guardian_aura":40,"gummy":1,"guzzling_energy":90,"guzzling_pouch":90,"heal":20,"holy_alembic":80,"holy_boots":80,"holy_brush":80,"holy_buckler":80,"holy_bulwark":80,"holy_cheese":80,"holy_chisel":80,"holy_enhancer":80,"holy_gauntlets":80,"holy_hammer":80,"holy_hatchet":80,"holy_helmet":80,"holy_mace":80,"holy_milk":80,"holy_needle":80,"holy_plate_body":80,"holy_plate_legs":80,"holy_pot":80,"holy_shears":80,"holy_spatula":80,"holy_spear":80,"holy_sword":80,"ice_spear":20,"icy_cloth":50,"icy_robe_bottoms":50,"icy_robe_top":50,"impale":20,"infernal_battlestaff":85,"infernal_ember":85,"insanity":60,"intelligence_coffee":1,"invincible":60,"jackalope_antler":85,"jackalope_staff":85,"jade":40,"jungle_essence":20,"knights_aegis":95,"knights_aegis_refined":95,"knights_ingot":95,"kraken_chaps":95,"kraken_chaps_refined":95,"kraken_fang":95,"kraken_leather":95,"kraken_tunic":95,"kraken_tunic_refined":95,"labyrinth_essence":95,"labyrinth_refinement_shard":95,"large_pouch":40,"liberica_coffee_bean":35,"life_drain":60,"linen_boots":15,"linen_fabric":15,"linen_gloves":15,"linen_hat":15,"linen_robe_bottoms":15,"linen_robe_top":15,"living_granite":85,"log":1,"lucky_coffee":45,"lumber":1,"lumberjacks_bottoms":90,"lumberjacks_top":90,"luna_robe_bottoms":70,"luna_robe_top":70,"luna_wing":70,"maelstrom_plate_body":95,"maelstrom_plate_body_refined":95,"maelstrom_plate_legs":95,"maelstrom_plate_legs_refined":95,"maelstrom_plating":95,"magic_coffee":20,"magicians_cloth":95,"magicians_hat":95,"magicians_hat_refined":95,"magnet":85,"magnetic_gloves":85,"magnifying_glass":60,"maim":50,"mana_spring":60,"manticore_shield":85,"manticore_sting":85,"marine_chaps":50,"marine_scale":50,"marine_tunic":50,"marksman_bracers":95,"marksman_bracers_refined":95,"marksman_brooch":95,"marsberry":65,"marsberry_cake":65,"marsberry_donut":65,"master_alchemy_charm":80,"master_attack_charm":80,"master_brewing_charm":80,"master_cheesesmithing_charm":80,"master_cooking_charm":80,"master_crafting_charm":80,"master_defense_charm":80,"master_enhancing_charm":80,"master_foraging_charm":80,"master_intelligence_charm":80,"master_magic_charm":80,"master_melee_charm":80,"master_milking_charm":80,"master_ranged_charm":80,"master_stamina_charm":80,"master_tailoring_charm":80,"master_woodcutting_charm":80,"medium_pouch":20,"melee_coffee":20,"milk":1,"milking_essence":1,"milking_tea":1,"minor_heal":1,"mirror_of_protection":75,"mooberry":50,"mooberry_cake":50,"mooberry_donut":50,"moolong_tea_leaf":50,"moonstone":55,"mystic_aura":40,"natures_veil":50,"necklace_of_efficiency":30,"necklace_of_speed":75,"necklace_of_wisdom":60,"orange":20,"orange_gummy":20,"orange_key_fragment":70,"orange_yogurt":20,"panda_fluff":65,"panda_gloves":65,"pathbreaker_boots":95,"pathbreaker_boots_refined":95,"pathbreaker_lodestone":95,"pathfinder_boots":95,"pathfinder_boots_refined":95,"pathfinder_lodestone":95,"pathseeker_boots":95,"pathseeker_boots_refined":95,"pathseeker_lodestone":95,"peach":50,"peach_gummy":50,"peach_yogurt":50,"pearl":10,"penetrating_shot":60,"penetrating_strike":60,"pestilent_shot":50,"philosophers_earrings":90,"philosophers_necklace":90,"philosophers_ring":90,"philosophers_stone":90,"pincer_gloves":25,"pirate_chest_key":95,"pirate_entry_key":95,"pirate_essence":95,"pirate_refinement_shard":95,"plum":35,"plum_gummy":35,"plum_yogurt":35,"poke":1,"polar_bear_fluff":65,"polar_bear_shoes":65,"precision":40,"prime_catalyst":80,"processing_tea":45,"provoke":60,"puncture":50,"purple_key_fragment":70,"purpleheart_bow":35,"purpleheart_crossbow":35,"purpleheart_fire_staff":35,"purpleheart_log":35,"purpleheart_lumber":35,"purpleheart_nature_staff":35,"purpleheart_shield":35,"purpleheart_water_staff":35,"quick_aid":20,"quick_shot":1,"radiant_boots":75,"radiant_fabric":75,"radiant_fiber":80,"radiant_gloves":75,"radiant_hat":75,"radiant_robe_bottoms":75,"radiant_robe_top":75,"rain_of_arrows":20,"rainbow_alembic":65,"rainbow_boots":65,"rainbow_brush":65,"rainbow_buckler":65,"rainbow_bulwark":65,"rainbow_cheese":65,"rainbow_chisel":65,"rainbow_enhancer":65,"rainbow_gauntlets":65,"rainbow_hammer":65,"rainbow_hatchet":65,"rainbow_helmet":65,"rainbow_mace":65,"rainbow_milk":65,"rainbow_needle":65,"rainbow_plate_body":65,"rainbow_plate_legs":65,"rainbow_pot":65,"rainbow_shears":65,"rainbow_spatula":65,"rainbow_spear":65,"rainbow_sword":65,"ranged_coffee":20,"ranger_necklace":45,"red_culinary_hat":60,"red_panda_fluff":80,"red_tea_leaf":65,"redwood_bow":65,"redwood_crossbow":65,"redwood_fire_staff":65,"redwood_log":65,"redwood_lumber":65,"redwood_nature_staff":65,"redwood_shield":65,"redwood_water_staff":65,"regal_jewel":95,"regal_sword":95,"regal_sword_refined":95,"rejuvenate":50,"reptile_boots":15,"reptile_bracers":15,"reptile_chaps":15,"reptile_hide":15,"reptile_hood":15,"reptile_leather":15,"reptile_tunic":15,"retribution":60,"revenant_anima":85,"revenant_chaps":85,"revenant_tunic":85,"revive":60,"ring_of_armor":45,"ring_of_critical_strike":75,"ring_of_essence_find":30,"ring_of_gathering":15,"ring_of_rare_find":60,"ring_of_regeneration":45,"ring_of_resistance":45,"rippling_trident":95,"rippling_trident_refined":95,"robusta_coffee_bean":20,"rough_boots":1,"rough_bracers":1,"rough_chaps":1,"rough_hide":1,"rough_hood":1,"rough_leather":1,"rough_tunic":1,"royal_cloth":95,"royal_fire_robe_bottoms":95,"royal_fire_robe_bottoms_refined":95,"royal_fire_robe_top":95,"royal_fire_robe_top_refined":95,"royal_nature_robe_bottoms":95,"royal_nature_robe_bottoms_refined":95,"royal_nature_robe_top":95,"royal_nature_robe_top_refined":95,"royal_water_robe_bottoms":95,"royal_water_robe_bottoms_refined":95,"royal_water_robe_top":95,"royal_water_robe_top_refined":95,"scratch":1,"shard_of_protection":30,"shield_bash":60,"shoebill_feather":30,"shoebill_shoes":30,"sighted_bracers":60,"silencing_shot":40,"silk_boots":55,"silk_fabric":55,"silk_gloves":55,"silk_hat":55,"silk_robe_bottoms":55,"silk_robe_top":55,"sinister_cape":80,"sinister_cape_refined":80,"sinister_chest_key":95,"sinister_entry_key":95,"sinister_essence":95,"sinister_refinement_shard":95,"smack":1,"small_pouch":1,"smoke_burst":50,"snail_shell":25,"snail_shell_helmet":25,"snake_fang":15,"snake_fang_dirk":15,"sorcerer_boots":65,"sorcerer_essence":65,"sorcerers_sole":65,"soul_fragment":85,"soul_hunter_crossbow":85,"spaceberry":80,"spaceberry_cake":80,"spaceberry_donut":80,"spacia_coffee_bean":80,"speed_aura":40,"spike_shell":60,"spiked_bulwark":85,"stalactite_shard":85,"stalactite_spear":85,"stamina_coffee":1,"star_fragment":15,"star_fruit":80,"star_fruit_gummy":80,"star_fruit_yogurt":80,"steady_shot":50,"stone_key_fragment":85,"strawberry":35,"strawberry_cake":35,"strawberry_donut":35,"stunning_blow":50,"sugar":1,"sundering_crossbow":95,"sundering_crossbow_refined":95,"sundering_jewel":95,"sunstone":70,"super_alchemy_tea":50,"super_attack_coffee":50,"super_brewing_tea":50,"super_cheesesmithing_tea":65,"super_cooking_tea":50,"super_crafting_tea":65,"super_defense_coffee":50,"super_enhancing_tea":50,"super_foraging_tea":35,"super_intelligence_coffee":35,"super_magic_coffee":65,"super_melee_coffee":65,"super_milking_tea":35,"super_ranged_coffee":65,"super_stamina_coffee":35,"super_tailoring_tea":65,"super_woodcutting_tea":35,"swamp_essence":1,"sweep":20,"swiftness_coffee":60,"tailoring_essence":1,"tailoring_tea":20,"tailors_bottoms":90,"tailors_top":90,"taunt":40,"thread_of_expertise":90,"tome_of_healing":35,"tome_of_the_elements":70,"toughness":40,"toxic_pollen":20,"trainee_alchemy_charm":1,"trainee_attack_charm":1,"trainee_brewing_charm":1,"trainee_cheesesmithing_charm":1,"trainee_cooking_charm":1,"trainee_crafting_charm":1,"trainee_defense_charm":1,"trainee_enhancing_charm":1,"trainee_foraging_charm":1,"trainee_intelligence_charm":1,"trainee_magic_charm":1,"trainee_melee_charm":1,"trainee_milking_charm":1,"trainee_ranged_charm":1,"trainee_stamina_charm":1,"trainee_tailoring_charm":1,"trainee_woodcutting_charm":1,"treant_bark":40,"treant_shield":40,"turtle_shell":30,"turtle_shell_body":30,"turtle_shell_legs":30,"twilight_essence":80,"ultra_alchemy_tea":70,"ultra_attack_coffee":70,"ultra_brewing_tea":70,"ultra_cheesesmithing_tea":85,"ultra_cooking_tea":70,"ultra_crafting_tea":85,"ultra_defense_coffee":70,"ultra_enhancing_tea":70,"ultra_foraging_tea":55,"ultra_intelligence_coffee":55,"ultra_magic_coffee":85,"ultra_melee_coffee":85,"ultra_milking_tea":55,"ultra_ranged_coffee":85,"ultra_stamina_coffee":55,"ultra_tailoring_tea":85,"ultra_woodcutting_tea":55,"umbral_boots":75,"umbral_bracers":75,"umbral_chaps":75,"umbral_hide":75,"umbral_hood":75,"umbral_leather":75,"umbral_tunic":75,"vampire_fang":85,"vampire_fang_dirk":85,"vampiric_bow":85,"vampirism":60,"verdant_alembic":10,"verdant_boots":10,"verdant_brush":10,"verdant_buckler":10,"verdant_bulwark":10,"verdant_cheese":10,"verdant_chisel":10,"verdant_enhancer":10,"verdant_gauntlets":10,"verdant_hammer":10,"verdant_hatchet":10,"verdant_helmet":10,"verdant_mace":10,"verdant_milk":10,"verdant_needle":10,"verdant_plate_body":10,"verdant_plate_legs":10,"verdant_pot":10,"verdant_shears":10,"verdant_spatula":10,"verdant_spear":10,"verdant_sword":10,"vision_helmet":55,"vision_shield":55,"watchful_relic":70,"water_strike":1,"werewolf_claw":85,"werewolf_slasher":85,"wheat":1,"white_key_fragment":70,"wisdom_coffee":30,"wisdom_tea":30,"wizard_necklace":45,"woodcutting_essence":1,"woodcutting_tea":1,"wooden_bow":1,"wooden_crossbow":1,"wooden_fire_staff":1,"wooden_nature_staff":1,"wooden_shield":1,"wooden_water_staff":1,"yogurt":1};
 const EQUIPMENT_BASE_BONUSES = {"/items/eye_watch": {"base": {"cheesesmithingEfficiency": 0.1, "craftingEfficiency": 0.1, "tailoringEfficiency": 0.1}}, "/items/red_culinary_hat": {"base": {"cookingEfficiency": 0.1, "brewingEfficiency": 0.1}}, "/items/collectors_boots": {"base": {"milkingEfficiency": 0.1, "woodcuttingEfficiency": 0.1, "foragingEfficiency": 0.1}}, "/items/enchanted_gloves": {"base": {"enhancingSpeed": 0.1, "alchemyEfficiency": 0.1}}, "/items/philosophers_necklace": {"base": {"skillingSpeed": 0.04, "skillingEfficiency": 0.02}}, "/items/necklace_of_speed": {"base": {"skillingSpeed": 0.04}}, "/items/necklace_of_efficiency": {"base": {"skillingEfficiency": 0.02}}, "/items/earrings_of_gathering": {"base": {"gatheringQuantity": 0.02}}, "/items/ring_of_gathering": {"base": {"gatheringQuantity": 0.02}}, "/items/gatherer_cape": {"base": {"milkingSpeed": 0.05, "foragingSpeed": 0.05, "woodcuttingSpeed": 0.05}}, "/items/artificer_cape": {"base": {"cheesesmithingSpeed": 0.05, "craftingSpeed": 0.05, "tailoringSpeed": 0.05}}, "/items/culinary_cape": {"base": {"cookingSpeed": 0.05, "brewingSpeed": 0.05}}, "/items/chance_cape": {"base": {"alchemySpeed": 0.05, "enhancingSpeed": 0.05}}, "/items/dairyhands_top": {"base": {"milkingEfficiency": 0.1}}, "/items/dairyhands_bottoms": {"base": {"milkingEfficiency": 0.1}}, "/items/foragers_top": {"base": {"foragingEfficiency": 0.1}}, "/items/foragers_bottoms": {"base": {"foragingEfficiency": 0.1}}, "/items/lumberjacks_top": {"base": {"woodcuttingEfficiency": 0.1}}, "/items/lumberjacks_bottoms": {"base": {"woodcuttingEfficiency": 0.1}}, "/items/cheesemakers_top": {"base": {"cheesesmithingEfficiency": 0.1}}, "/items/cheesemakers_bottoms": {"base": {"cheesesmithingEfficiency": 0.1}}, "/items/crafters_top": {"base": {"craftingEfficiency": 0.1}}, "/items/crafters_bottoms": {"base": {"craftingEfficiency": 0.1}}, "/items/tailors_top": {"base": {"tailoringEfficiency": 0.1}}, "/items/tailors_bottoms": {"base": {"tailoringEfficiency": 0.1}}, "/items/chefs_top": {"base": {"cookingEfficiency": 0.1}}, "/items/chefs_bottoms": {"base": {"cookingEfficiency": 0.1}}, "/items/brewers_top": {"base": {"brewingEfficiency": 0.1}}, "/items/brewers_bottoms": {"base": {"brewingEfficiency": 0.1}}, "/items/alchemists_top": {"base": {"alchemyEfficiency": 0.1}}, "/items/alchemists_bottoms": {"base": {"alchemyEfficiency": 0.1}}, "/items/enhancers_top": {"base": {"enhancingSpeed": 0.1}}, "/items/enhancers_bottoms": {"base": {"enhancingSpeed": 0.1}}};
 const ENH_BONUS_PERCENT_TABLE = [0, 0.02, 0.042, 0.066, 0.092, 0.12, 0.15, 0.182, 0.216, 0.252, 0.29, 0.334, 0.384, 0.44, 0.502, 0.57, 0.644, 0.724, 0.81, 0.902, 1];
 const ACCESSORY_ENH_SLOTS = new Set(["袋子", "背部", "项链", "耳环", "戒指"]);
@@ -3463,6 +3464,36 @@ function calculate() {
 }
 
 // === Import ===
+// 把游戏原生 wearableItemMap（profile_shared / loadout_shared 通用）转成计算器的
+// { equipment, ownedEquip }：工具/战斗件/两用槽 → equipment（一槽一件）；
+// OWNED_SLOTS 里的生活家族件 → ownedEquip（拥有集合，计算时按技能择优）。
+// member 资料导入与试炼配装导入共用这一份逻辑，保证两边对装备的理解完全一致。
+function wearableMapToEquip(wearableMap) {
+  const equipment = {};
+  const ownedEquip = {};
+  const map = (wearableMap && typeof wearableMap === 'object') ? wearableMap : {};
+  for (const [loc, item] of Object.entries(map)) {
+    const slot = ITEM_LOCATION_TO_SLOT[loc];
+    if (!slot) continue; // 跳过不支持的槽位 (charm, trinket 等)
+    const iconId = item && item.itemHrid ? item.itemHrid.replace('/items/', '') : '';
+    const enhance = Number(item && item.enhancementLevel || 0);
+    if (iconId) {
+      // 如果该槽位已有装备且当前是 two_hand, 不覆盖 main_hand
+      if (slot === '主手' && equipment[slot] && loc === '/item_locations/two_hand') continue;
+      equipment[slot] = { iconId, enhance };
+    }
+  }
+  for (const slot of OWNED_SLOTS) {
+    ownedEquip[slot] = {};
+    const eq = equipment[slot];
+    if (eq && eq.iconId && isOwnedFamily(slot, eq.iconId)) {
+      ownedEquip[slot][eq.iconId] = clampEnhance(eq.enhance);
+      delete equipment[slot];
+    }
+  }
+  return { equipment, ownedEquip };
+}
+
 function parseMemberFromProfile(profile) {
   if (!profile) return null;
   const name = (profile.sharableCharacter && profile.sharableCharacter.name) || '';
@@ -3476,31 +3507,9 @@ function parseMemberFromProfile(profile) {
     }
   }
   const levels = SKILL_KEYS.map(k => skillMap[k] || 0);
-  // 提取装备
-  const equipment = {};
-  const wearableMap = profile.wearableItemMap || {};
-  for (const [loc, item] of Object.entries(wearableMap)) {
-    const slot = ITEM_LOCATION_TO_SLOT[loc];
-    if (!slot) continue; // 跳过不支持的槽位 (charm, trinket 等)
-    const iconId = item.itemHrid ? item.itemHrid.replace('/items/', '') : '';
-    const enhance = Number(item.enhancementLevel || 0);
-    if (iconId) {
-      // 如果该槽位已有装备且当前是 two_hand, 不覆盖 main_hand
-      if (slot === '主手' && equipment[slot] && loc === '/item_locations/two_hand') continue;
-      equipment[slot] = { iconId, enhance };
-    }
-  }
-  const out = { name, levels, equipment, ownedEquip: {} };
-  // 装备「拥有制」：把当前穿戴中、且属于可勾选家族的装备作为「拥有集合」的初值
-  // （游戏 profile_shared 只含穿戴中的装备，没有背包，其余拥有项需手工补勾）
-  for (const slot of OWNED_SLOTS) {
-    out.ownedEquip[slot] = {};
-    const eq = equipment[slot];
-    if (eq && eq.iconId && isOwnedFamily(slot, eq.iconId)) {
-      out.ownedEquip[slot][eq.iconId] = clampEnhance(eq.enhance);
-      delete equipment[slot];
-    }
-  }
+  // 提取装备（与试炼配装导入共用同一转换逻辑）
+  const { equipment, ownedEquip } = wearableMapToEquip(profile.wearableItemMap);
+  const out = { name, levels, equipment, ownedEquip };
   // 逐人加成数据：公会成员导出的是完整 profile，可能携带这些字段（成就/房屋 buff 依赖它们）
   if (profile.achievementsValue) out.achievementsValue = profile.achievementsValue;
   if (profile.achievementActionTypeBuffsDict) out.achievementActionTypeBuffsDict = profile.achievementActionTypeBuffsDict;
@@ -3619,8 +3628,53 @@ function normalizeLoadout(lo, kind) {
   return out;
 }
 
+// 装备等级（游戏 itemLevel，来自 init_client_data 的 itemDetailMap，构建期内联到 EQUIP_LEVELS）。
+// 数值越大装备等级越高；_refined 归一到基础款再查（游戏里基础/精良款 itemLevel 相同）。
+// 返回 undefined 表示该 iconId 没有等级数据 —— 此时不覆盖、保留本地（不回退到任何品质顺序）。
+function equipItemLevel(iconId) {
+  if (typeof EQUIP_LEVELS === 'undefined' || !EQUIP_LEVELS) return undefined;
+  const s = String(iconId || '');
+  const base = s.endsWith('_refined') ? s.slice(0, -'_refined'.length) : s;
+  let lv = EQUIP_LEVELS[s];
+  if (lv == null) lv = EQUIP_LEVELS[base];
+  return typeof lv === 'number' ? lv : undefined;
+}
+
+// 比较同一槽位两件装备谁更高级：只按 itemLevel（数值高者胜）。
+// 任一方没有等级数据 → 返回 0（保留本地，不覆盖）。返回 >0 表示 fresh 胜，<0 表示 cur 胜。
+function compareEquipRank(slot, curIconId, freshIconId) {
+  const lc = equipItemLevel(curIconId), lf = equipItemLevel(freshIconId);
+  if (lc == null || lf == null) return 0;
+  return lf - lc;
+}
+
+// 一槽一件的装备（战斗件/两用/工具）逐槽合并：
+//   · 一边空 → 取另一边；
+//   · 同 iconId → 取强化高者；
+//   · 不同 iconId（同槽互斥）→ 取装备等级（itemLevel）更高的一件；任一方无等级数据则保留本地；
+// 这样把报名配装并进当前穿戴时，不会被低级战斗装顶掉高级装备。
+function mergeEquipByQuality(local, fresh) {
+  const out = {};
+  for (const slot of Object.keys(local || {})) {
+    const e = local[slot];
+    if (e && e.iconId) out[slot] = { iconId: e.iconId, enhance: clampEnhance(e.enhance) };
+  }
+  for (const slot of Object.keys(fresh || {})) {
+    const e = fresh[slot];
+    if (!e || !e.iconId) continue;
+    const cur = out[slot];
+    if (!cur || !cur.iconId) { out[slot] = { iconId: e.iconId, enhance: clampEnhance(e.enhance) }; continue; }
+    if (cur.iconId === e.iconId) { cur.enhance = Math.max(clampEnhance(cur.enhance), clampEnhance(e.enhance)); continue; }
+    if (compareEquipRank(slot, cur.iconId, e.iconId) > 0) out[slot] = { iconId: e.iconId, enhance: clampEnhance(e.enhance) };
+  }
+  return out;
+}
+
 // 试炼配装按角色名合并进现有成员：已有成员 → 挂到 field 指定字段；没有则新建占位成员。
-// 只写那一个字段，绝不动 levels/equipment/shrines —— 三份数据互不覆盖。
+// 除了留存 loadout 本身，还把其中的 wearableItemMap 转成 equipment/ownedEquip 后合进当前装备：
+//   · equipment（战斗件/两用/工具，一槽一件）→ 同槽位按【装备等级 itemLevel】保留高级的一件；
+//   · ownedEquip（生活件，多件并存）→ 取并集，互不互斥；
+// levels/shrines 等绝不动。支持先导任意一份、顺序无关。
 function mergeLoadouts(dump, field, kind) {
   const list = (dump.members || []).map(function(lo){ return normalizeLoadout(lo, kind); }).filter(Boolean);
   if (!list.length) return null;
@@ -3639,17 +3693,24 @@ function mergeLoadouts(dump, field, kind) {
     const k = String(lo.name).trim();
     if (seen[k]) continue;
     seen[k] = true;
+    // 报名配装的装备 → 计算器装备结构（工具/战斗件/两用槽 → equipment；生活家族 → ownedEquip）
+    const gear = wearableMapToEquip(lo.wearableItemMap);
     const old = byName[k];
     if (old) {
       old[field] = lo;
+      old.equipment = mergeEquipByQuality(old.equipment, gear.equipment);
+      old.ownedEquip = mergeOwnedEquip(old.ownedEquip, gear.ownedEquip);
       old._ts = Date.now();
       updated++;
     } else {
-      // 只在这类试炼出现、没报别处的人 → 建占位成员（levels 全 0，不参与计算），保留配装
+      // 只在这类试炼出现、没报别处的人 → 建占位成员（levels 全 0，不参与计算），保留配装 + 装备
       const fresh = restoreMemberDump({ name: k });
       fresh.id = nextId++;
       fresh[field] = lo;
+      fresh.equipment = mergeEquipByQuality(fresh.equipment, gear.equipment);
+      fresh.ownedEquip = mergeOwnedEquip(fresh.ownedEquip, gear.ownedEquip);
       state.members.push(fresh);
+      byName[k] = fresh;
       added++;
       addedNames.push(k);
     }
@@ -3706,10 +3767,11 @@ function importCalculatorDump(dump) {
   return { count: state.members.length, stat: stat };
 }
 
-// 导入后落盘：共享模式下立即全量覆盖 bin（不走合并，防止被旧数据覆盖），否则只写本地。
+// 导入后落盘：共享模式下立即全量覆盖 bin（不走合并，防止被旧数据覆盖），否则写本地。
+// 本地写入统一走 saveData()（含配额满时清理旧缓存重试 + 失败告警），不要在这里
+// 静默 setItem 一次——旧实现就是这里 catch 吞掉 QuotaExceededError 导致数据假保存。
 async function persistAfterImport() {
   const data = JSON.stringify(sharedPayload());
-  try { localStorage.setItem(getStorageKey(), data); } catch(e) {}
   if (state.isShared && state.binId && state.encKey) {
     await forcePushToBin(data);
   } else {
@@ -3920,26 +3982,29 @@ function importJson() {
         return;
       }
 
-      // ⓪a 生活试炼配装导出（mwi-skilling-loadouts）→ 按名字挂到成员的 skillingLoadout 字段。
-      //     与资料档 profile / 战斗档是同一个人的不同数据，三份互不覆盖；试炼配置不动。
+      // ⓪a 生活试炼配装导出（mwi-skilling-loadouts）→ 按名字挂到成员 skillingLoadout 字段，
+      //     并把配装装备并集合并进当前 equipment/ownedEquip（成员详情可见、计算可用）。
+      //     与资料档 profile / 战斗档是同一个人的不同数据，试炼配置不动。
       if (isSkillingLoadoutDump(parsed)) {
         const stat = mergeSkillingLoadouts(parsed);
         if (!stat) { alert(t('importFailed')); return; }
         if (parsed.guildBuildingLevelMap) applyImportedGuildBuildings([parsed]);
         await persistAfterImport();
         renderAll();
+        if (state.members.length > 0) calculate();   // 配装现已参与计算 → 立即刷新结果
         showImportReport(stat);
         return;
       }
 
-      // ⓪b 战斗配装导出（mwi-combat-loadouts）→ 按名字把 loadout 挂到成员的 combatLoadout 字段。
-      //     与 roster（资料当前装备）是同一个人的两套配装，互不覆盖；试炼配置不动。
+      // ⓪b 战斗配装导出（mwi-combat-loadouts）→ 按名字挂到成员 combatLoadout 字段，
+      //     并把配装装备并集合并进当前 equipment/ownedEquip。试炼配置不动。
       if (isCombatLoadoutDump(parsed)) {
         const stat = mergeCombatLoadouts(parsed);
         if (!stat) { alert(t('importFailed')); return; }
         if (parsed.guildBuildingLevelMap) applyImportedGuildBuildings([parsed]);
         await persistAfterImport();
         renderAll();
+        if (state.members.length > 0) calculate();   // 配装现已参与计算 → 立即刷新结果
         showImportReport(stat);
         return;
       }
@@ -4072,7 +4137,58 @@ function applyImportedGuildBuildings(profiles) {
 
 
 // === Data Persistence ===
-function getStorageKey() { return 'mwi_trial_'+(state.guild||'default'); }
+// 本地缓存固定用一个键，不再随 state.guild 漂移。
+// 旧版键名 = 'mwi_trial_' + state.guild：本地打开页时 guild 为空 → 读 mwi_trial_default；
+// 导入带公会名的数据后 state.guild 被赋值 → 却写到 mwi_trial_<guild>，刷新又读回 default，
+// 表现就是「导入后显示正常，一刷新就回到旧缓存」。公会名本就存在载荷内部，无需再进键名。
+const LOCAL_STORAGE_KEY = 'mwi_trial_data_v2';
+function getStorageKey() { return LOCAL_STORAGE_KEY; }
+
+// 旧版按公会名分键会遗留多个大体积缓存（mwi_trial_default / mwi_trial_<公会名>，
+// 甚至 state.guild 是对象时的 mwi_trial_[object Object] 垃圾键）。它们加起来能占满
+// localStorage 的 ~5MB 配额，导致固定键写入时抛 QuotaExceededError —— 表现就是
+// 「导入后显示正常（内存里有），一刷新就回到旧缓存（磁盘上写不进去）」。
+// 这里统一扫描并删除所有这些旧键，只在迁移需要时先读出内容。
+// 返回 { raw, srcKey, count }（raw 为选中那份的原文），供 migrateLegacyStorage 使用。
+function purgeLegacyStorageKeys() {
+  const legacy = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('mwi_trial_') !== 0 || k === LOCAL_STORAGE_KEY) continue;
+      let raw = localStorage.getItem(k), obj = null;
+      try { obj = JSON.parse(raw); } catch(e) {}
+      legacy.push({ key: k, raw: raw, obj: obj });
+    }
+  } catch(e) {}
+  legacy.forEach(function(x){ try { localStorage.removeItem(x.key); } catch(e) {} });
+  return legacy;
+}
+
+// 首次使用新键时，从旧版缓存里迁移出「最新」的一份：
+// 取成员 _ts 最大者（导入/编辑都会刷新 _ts），相同时取成员数多者。
+// 关键：先 purge 删除旧键腾出配额，再写固定键，否则旧键占满空间会写入失败。
+function migrateLegacyStorage() {
+  const legacy = purgeLegacyStorageKeys();
+  let best = null, bestTs = -1, bestCount = -1;
+  legacy.forEach(function(x){
+    const obj = x.obj;
+    if (!obj || !Array.isArray(obj.members)) return;
+    let ts = 0;
+    obj.members.forEach(function(m){ if (m && Number(m._ts) > ts) ts = Number(m._ts); });
+    const cnt = obj.members.length;
+    if (ts > bestTs || (ts === bestTs && cnt > bestCount)) {
+      bestTs = ts; bestCount = cnt; best = x;
+    }
+  });
+  if (best && best.raw) {
+    try { localStorage.setItem(LOCAL_STORAGE_KEY, best.raw); }
+    catch(e) { console.warn('[mwi] 迁移写入失败:', e.name); }
+    console.info('[mwi] 已迁移旧缓存到固定键:', best.key, '成员数:', bestCount);
+    return best.raw;
+  }
+  return null;
+}
 // 共享/持久化的统一载荷：成员（含个人神龛）+ 试炼槽 + 公会建筑（公会全局）等
 function sharedPayload() {
   return {
@@ -4086,12 +4202,38 @@ function sharedPayload() {
 }
 function saveData() {
   const data = JSON.stringify(sharedPayload());
-  try { localStorage.setItem(getStorageKey(), data); } catch(e) {}
+  try {
+    localStorage.setItem(getStorageKey(), data);
+  } catch(e) {
+    // 配额满：先把旧版遗留缓存清掉腾空间，再重试一次。
+    try {
+      purgeLegacyStorageKeys();
+      localStorage.setItem(getStorageKey(), data);
+      console.info('[mwi] 配额已满，已清理旧缓存后重新保存成功');
+    } catch(e2) {
+      // 仍然失败才真正告警，不再静默吞掉（否则用户永远不知道数据没落盘）。
+      console.error('[mwi] 本地缓存写入失败:', e2.name, e2.message);
+      if (typeof alert === 'function' && !state._saveWarned) {
+        state._saveWarned = true;
+        alert('警告：浏览器本地存储已满，数据无法保存到本机！\n\n'
+            + '本次修改只在当前页面有效，刷新后会丢失。\n'
+            + '请到浏览器设置中清除本站缓存，或换一个浏览器后重新导入数据。');
+      }
+    }
+  }
   if (state.isShared && state.binId && state.encKey) saveToBin(data);
 }
 function loadData() {
   try {
-    const raw = localStorage.getItem(getStorageKey());
+    let raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) {
+      // 固定键已有数据：旧版遗留键（含 mwi_trial_[object Object] 垃圾）纯属占配额，直接清掉，
+      // 否则 saveData 写入新数据时会因配额满而失败——这正是「刷新后回到旧缓存」的根因。
+      purgeLegacyStorageKeys();
+    } else {
+      // 固定键不存在：迁移内部会先读旧键、删除腾空间、再写固定键。
+      raw = migrateLegacyStorage();
+    }
     if (raw) {
       Object.assign(state, JSON.parse(raw));
       if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
