@@ -843,6 +843,7 @@ table.member-table td.assign-cell svg { width:22px; height:22px; background:var(
     <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()" title="切换深色 / 浅色主题">🌙</button>
     <button class="btn" id="btn-refresh" onclick="refreshFromServer()" style="display:none">🔄</button>
     <button class="btn" id="btn-share" onclick="openShareDialog()">共享设置</button>
+    <button class="btn" id="btn-bookmark" onclick="openBookmarkDialog()" title="一键导入我的游戏数据">导入我的数据</button>
     <button class="btn" id="btn-import-json" onclick="importJson()">导入</button>
     <button class="btn" id="btn-export-json" onclick="exportJson()">导出</button>
     <a href="mwi_profile_export.user.js" download class="btn btn-sm" id="export-script-link" style="font-size:12px;padding:4px 8px;opacity:.6" title="">📦</a>
@@ -923,12 +924,18 @@ const I18N = {
     deleteBtn:'删', selectEquip:'选择装备', searchEquip:'搜索装备...',
     enhanceLevel:'强化等级', clear:'清除', cancel:'取消', confirm:'确认',
     noEquip:'未选择装备', passes:'次通关', people:'人', offlineMode:'离线模式',
-    connected:'已连接', guildName:'公会名称', password:'访问密码 (用于加密数据)',
+    connected:'已连接', guildName:'公会名称',
     masterKey:'jsonbin.io Master Key (会长填写)',
     shareHint:'会长创建共享空间后，生成分享链接发给成员。成员打开链接即可查看/更新数据，无需注册。',
+    binWriteDenied:'在线同步失败（403）。可能原因：Master Key 无效、请求过于频繁，或网络被拦截。数据已保存到本地，但没有写入云端。可在「共享设置」中检查/更新 Master Key 后点「重试同步」。',
+    binWriteTooLarge:'在线同步失败：jsonbin 免费版单条记录上限 100KB，当前云端数据超限。本页已自动精简配装与冗余字段；若仍超限，请删减成员数据或升级 jsonbin Pro。数据已保存在本地。',
+    binWriteFailed:'在线同步失败（HTTP {status}{detail}）。数据已保存到本地。',
+    binReadOnly:'只读（未配置 Master Key）',
+    saveKeyBtn:'保存密钥', retrySyncBtn:'重试同步', keySaved:'Master Key 已保存',
+    syncOk:'已同步到云端', syncFail:'同步失败',
     currentUrl:'当前共享链接', createShare:'创建共享', closeBtn:'关闭',
     shareCreated:'共享空间已创建！复制链接发给公会成员。', linkCopied:'链接已复制',
-    enterPassword:'请输入访问密码:', fillAll:'请填写所有字段',
+    fillAll:'请填写所有字段',
     createFailed:'创建失败，请检查 Master Key', addMembersFirst:'请先添加成员数据',
     importSuccess:'导入成功', importFailed:'未找到有效数据',
     importRepTitle:'导入完成',
@@ -1003,6 +1010,16 @@ const I18N = {
     levelUnit:'级',
     skillLabels:['挤奶','采摘','伐木','奶酪锻造','制作','缝纫','烹饪','冲泡','炼金','强化'],
     equipLabels:['主手','副手','头部','身体','手部','腿部','脚部','项链','耳环','戒指','袋子','背部','挤奶工具','采摘工具','伐木工具','奶酪锻造工具','制作工具','缝纫工具','烹饪工具','冲泡工具','炼金工具','强化工具'],
+    bmBtn:'导入我的数据', bmTitle:'一键导入我的游戏数据',
+    bmIntro:'把下面的链接拖到游戏标签页的书签栏，之后在游戏里点一下这个书签即可。',
+    bmSafeTitle:'安全说明',
+    bmSafe:'这个书签只读取游戏页面内存里的角色数据（角色名、当前穿戴、背包装备、技能等级），不会发送任何网络请求、不含任何自动化操作，也不会修改游戏里的任何东西。请放心使用。',
+    bmStep1:'① 把下面的链接拖到书签栏：',
+    bmStep2:'② 在游戏角色页点一下书签即可导入。看不到书签栏？按 Ctrl+Shift+B 显示。',
+    bmDrag:'导入我的数据', bmGen:'生成书签', bmCopy:'复制书签', bmCopied:'已复制，请到书签栏新建书签并粘贴为网址',
+    bmHint:'若点书签提示读不到数据，确认已登录并停留在角色游戏页面（网址含 game?characterId=）。',
+    bmMobile:'提示：这种书签导入方式只支持电脑浏览器（Chrome / Edge 等），手机浏览器不支持。',
+    bmPaste:'从剪贴板导入', bmImportFail:'书签数据导入失败',
   },
   en: {
     title:'MWI Trial Calculator', trialConfig:'Trial Config', memberData:'Member Data',
@@ -1029,12 +1046,18 @@ const I18N = {
     deleteBtn:'Del', selectEquip:'Select Equipment', searchEquip:'Search equipment...',
     enhanceLevel:'Enhancement Level', clear:'Clear', cancel:'Cancel', confirm:'Confirm',
     noEquip:'No equipment selected', passes:'passes', people:'people', offlineMode:'Offline',
-    connected:'Connected', guildName:'Guild Name', password:'Access Password (for encryption)',
+    connected:'Connected', guildName:'Guild Name',
     masterKey:'jsonbin.io Master Key (for guild leader)',
     shareHint:'After the leader creates a shared space, share the link with members. Members can view/update data without registration.',
+    binWriteDenied:'Online sync failed (403). Possible causes: invalid Master Key, too many requests, or a blocked network. Data is saved locally but was NOT written to the cloud. Check/update the Master Key in Share settings and click Retry Sync.',
+    binWriteTooLarge:'Online sync failed: jsonbin free tier caps a record at 100KB and this payload is over the limit. This page already trims loadouts and redundant fields; if it still fails, remove some member data or upgrade jsonbin Pro. Data is saved locally.',
+    binWriteFailed:'Online sync failed (HTTP {status}{detail}). Data is saved locally.',
+    binReadOnly:'Read-only (no Master Key configured)',
+    saveKeyBtn:'Save Key', retrySyncBtn:'Retry Sync', keySaved:'Master Key saved',
+    syncOk:'Synced to cloud', syncFail:'Sync failed',
     currentUrl:'Current Share URL', createShare:'Create Share', closeBtn:'Close',
     shareCreated:'Share space created! Copy the link to share with guild members.', linkCopied:'Link copied',
-    enterPassword:'Enter access password:', fillAll:'Please fill in all fields',
+    fillAll:'Please fill in all fields',
     createFailed:'Creation failed, please check Master Key', addMembersFirst:'Please add member data first',
     importSuccess:'Imported successfully', importFailed:'No valid data found',
     importRepTitle:'Import complete',
@@ -1107,6 +1130,16 @@ const I18N = {
     levelUnit:'lv',
     skillLabels:['Milking','Foraging','Woodcutting','Cheesesmithing','Crafting','Tailoring','Cooking','Brewing','Alchemy','Enhancing'],
     equipLabels:['Main Hand','Off Hand','Head','Body','Hands','Legs','Feet','Necklace','Earring','Ring','Pouch','Back','Milking Tool','Foraging Tool','Woodcutting Tool','Cheesesmithing Tool','Crafting Tool','Tailoring Tool','Cooking Tool','Brewing Tool','Alchemy Tool','Enhancing Tool'],
+    bmBtn:'Import my data', bmTitle:'Import my game data in one click',
+    bmIntro:'Drag the link below to your bookmarks bar, then click it once while on the game tab.',
+    bmSafeTitle:'Safety',
+    bmSafe:'This bookmark only reads your character data from the game page memory (name, equipped gear, inventory, skill levels). It sends no network requests, performs no automated actions, and changes nothing in the game. Safe to use.',
+    bmStep1:'① Drag this link to your bookmarks bar:',
+    bmStep2:'② Click the bookmark on your character page to import. Can\'t see the bookmarks bar? Press Ctrl+Shift+B.',
+    bmDrag:'Import my data', bmGen:'Generate bookmark', bmCopy:'Copy bookmark', bmCopied:'Copied — create a bookmark and paste this as its URL',
+    bmHint:'If the bookmark says it cannot read data, make sure you are logged in and on the character page (URL contains game?characterId=).',
+    bmMobile:'Note: this bookmark import method only works on desktop browsers (Chrome / Edge, etc.), not on mobile browsers.',
+    bmPaste:'Import from clipboard', bmImportFail:'Bookmark data import failed',
   }
 };
 function t(key) { return (I18N[state.lang] && I18N[state.lang][key]) || key; }
@@ -1220,6 +1253,7 @@ const EQUIP_ICONS = {
 const EQUIP_FAMILIES = {"身体": [{"id": "dairyhands_top", "name": "挤奶工上衣", "refined": false, "life": true}, {"id": "foragers_top", "name": "采摘者上衣", "refined": false, "life": true}, {"id": "lumberjacks_top", "name": "伐木工上衣", "refined": false, "life": true}, {"id": "cheesemakers_top", "name": "奶酪师上衣", "refined": false, "life": true}, {"id": "crafters_top", "name": "工匠上衣", "refined": false, "life": true}, {"id": "tailors_top", "name": "裁缝上衣", "refined": false, "life": true}, {"id": "chefs_top", "name": "厨师上衣", "refined": false, "life": true}, {"id": "brewers_top", "name": "饮品师上衣", "refined": false, "life": true}, {"id": "alchemists_top", "name": "炼金师上衣", "refined": false, "life": true}, {"id": "enhancers_top", "name": "强化师上衣", "refined": false, "life": true}], "腿部": [{"id": "dairyhands_bottoms", "name": "挤奶工下装", "refined": false, "life": true}, {"id": "foragers_bottoms", "name": "采摘者下装", "refined": false, "life": true}, {"id": "lumberjacks_bottoms", "name": "伐木工下装", "refined": false, "life": true}, {"id": "cheesemakers_bottoms", "name": "奶酪师下装", "refined": false, "life": true}, {"id": "crafters_bottoms", "name": "工匠下装", "refined": false, "life": true}, {"id": "tailors_bottoms", "name": "裁缝下装", "refined": false, "life": true}, {"id": "chefs_bottoms", "name": "厨师下装", "refined": false, "life": true}, {"id": "brewers_bottoms", "name": "饮品师下装", "refined": false, "life": true}, {"id": "alchemists_bottoms", "name": "炼金师下装", "refined": false, "life": true}, {"id": "enhancers_bottoms", "name": "强化师下装", "refined": false, "life": true}], "背部": [{"id": "gatherer_cape", "name": "采集者披风", "refined": true, "life": true}, {"id": "artificer_cape", "name": "工匠披风", "refined": true, "life": true}, {"id": "culinary_cape", "name": "厨师披风", "refined": true, "life": true}, {"id": "chance_cape", "name": "机缘披风", "refined": true, "life": true}], "头部": [{"id": "red_culinary_hat", "name": "红色厨师帽", "refined": false, "life": true}], "手部": [{"id": "enchanted_gloves", "name": "附魔手套", "refined": false, "life": true}], "脚部": [{"id": "collectors_boots", "name": "收藏家靴", "refined": false, "life": true}], "副手": [{"id": "eye_watch", "name": "掌上监工", "refined": false, "life": true}]};
 const OWNED_SLOTS = ["身体", "腿部", "背部", "头部", "手部", "脚部", "副手"];
 const HYBRID_SLOTS = ["项链", "耳环", "戒指", "袋子"];
+const EQUIP_ICON_TO_SLOT = {"stalactite_spear": "主手", "granite_bludgeon": "主手", "furious_spear": "主手", "furious_spear_refined": "主手", "regal_sword": "主手", "regal_sword_refined": "主手", "chaotic_flail": "主手", "chaotic_flail_refined": "主手", "soul_hunter_crossbow": "主手", "sundering_crossbow": "主手", "sundering_crossbow_refined": "主手", "frost_staff": "主手", "infernal_battlestaff": "主手", "jackalope_staff": "主手", "rippling_trident": "主手", "rippling_trident_refined": "主手", "blooming_trident": "主手", "blooming_trident_refined": "主手", "blazing_trident": "主手", "blazing_trident_refined": "主手", "cheese_sword": "主手", "verdant_sword": "主手", "azure_sword": "主手", "burble_sword": "主手", "crimson_sword": "主手", "rainbow_sword": "主手", "holy_sword": "主手", "cheese_spear": "主手", "verdant_spear": "主手", "azure_spear": "主手", "burble_spear": "主手", "crimson_spear": "主手", "rainbow_spear": "主手", "holy_spear": "主手", "cheese_mace": "主手", "verdant_mace": "主手", "azure_mace": "主手", "burble_mace": "主手", "crimson_mace": "主手", "rainbow_mace": "主手", "holy_mace": "主手", "wooden_crossbow": "主手", "birch_crossbow": "主手", "cedar_crossbow": "主手", "purpleheart_crossbow": "主手", "ginkgo_crossbow": "主手", "redwood_crossbow": "主手", "arcane_crossbow": "主手", "wooden_water_staff": "主手", "birch_water_staff": "主手", "cedar_water_staff": "主手", "purpleheart_water_staff": "主手", "ginkgo_water_staff": "主手", "redwood_water_staff": "主手", "arcane_water_staff": "主手", "wooden_nature_staff": "主手", "birch_nature_staff": "主手", "cedar_nature_staff": "主手", "purpleheart_nature_staff": "主手", "ginkgo_nature_staff": "主手", "redwood_nature_staff": "主手", "arcane_nature_staff": "主手", "wooden_fire_staff": "主手", "birch_fire_staff": "主手", "cedar_fire_staff": "主手", "purpleheart_fire_staff": "主手", "ginkgo_fire_staff": "主手", "redwood_fire_staff": "主手", "arcane_fire_staff": "主手", "gobo_stabber": "主手", "gobo_slasher": "主手", "gobo_smasher": "主手", "spiked_bulwark": "主手", "werewolf_slasher": "主手", "griffin_bulwark": "主手", "griffin_bulwark_refined": "主手", "gobo_shooter": "主手", "vampiric_bow": "主手", "cursed_bow": "主手", "cursed_bow_refined": "主手", "gobo_boomstick": "主手", "cheese_bulwark": "主手", "verdant_bulwark": "主手", "azure_bulwark": "主手", "burble_bulwark": "主手", "crimson_bulwark": "主手", "rainbow_bulwark": "主手", "holy_bulwark": "主手", "wooden_bow": "主手", "birch_bow": "主手", "cedar_bow": "主手", "purpleheart_bow": "主手", "ginkgo_bow": "主手", "redwood_bow": "主手", "arcane_bow": "主手", "eye_watch": "副手", "snake_fang_dirk": "副手", "vision_shield": "副手", "gobo_defender": "副手", "vampire_fang_dirk": "副手", "knights_aegis": "副手", "knights_aegis_refined": "副手", "treant_shield": "副手", "manticore_shield": "副手", "tome_of_healing": "副手", "tome_of_the_elements": "副手", "watchful_relic": "副手", "bishops_codex": "副手", "bishops_codex_refined": "副手", "cheese_buckler": "副手", "verdant_buckler": "副手", "azure_buckler": "副手", "burble_buckler": "副手", "crimson_buckler": "副手", "rainbow_buckler": "副手", "holy_buckler": "副手", "wooden_shield": "副手", "birch_shield": "副手", "cedar_shield": "副手", "purpleheart_shield": "副手", "ginkgo_shield": "副手", "redwood_shield": "副手", "arcane_shield": "副手", "red_culinary_hat": "头部", "snail_shell_helmet": "头部", "vision_helmet": "头部", "fluffy_red_hat": "头部", "corsair_helmet": "头部", "corsair_helmet_refined": "头部", "acrobatic_hood": "头部", "acrobatic_hood_refined": "头部", "magicians_hat": "头部", "magicians_hat_refined": "头部", "cheese_helmet": "头部", "verdant_helmet": "头部", "azure_helmet": "头部", "burble_helmet": "头部", "crimson_helmet": "头部", "rainbow_helmet": "头部", "holy_helmet": "头部", "rough_hood": "头部", "reptile_hood": "头部", "gobo_hood": "头部", "beast_hood": "头部", "umbral_hood": "头部", "cotton_hat": "头部", "linen_hat": "头部", "bamboo_hat": "头部", "silk_hat": "头部", "radiant_hat": "头部", "dairyhands_top": "身体", "foragers_top": "身体", "lumberjacks_top": "身体", "cheesemakers_top": "身体", "crafters_top": "身体", "tailors_top": "身体", "chefs_top": "身体", "brewers_top": "身体", "alchemists_top": "身体", "enhancers_top": "身体", "gator_vest": "身体", "turtle_shell_body": "身体", "colossus_plate_body": "身体", "demonic_plate_body": "身体", "anchorbound_plate_body": "身体", "anchorbound_plate_body_refined": "身体", "maelstrom_plate_body": "身体", "maelstrom_plate_body_refined": "身体", "marine_tunic": "身体", "revenant_tunic": "身体", "griffin_tunic": "身体", "kraken_tunic": "身体", "kraken_tunic_refined": "身体", "icy_robe_top": "身体", "flaming_robe_top": "身体", "luna_robe_top": "身体", "royal_water_robe_top": "身体", "royal_water_robe_top_refined": "身体", "royal_nature_robe_top": "身体", "royal_nature_robe_top_refined": "身体", "royal_fire_robe_top": "身体", "royal_fire_robe_top_refined": "身体", "cheese_plate_body": "身体", "verdant_plate_body": "身体", "azure_plate_body": "身体", "burble_plate_body": "身体", "crimson_plate_body": "身体", "rainbow_plate_body": "身体", "holy_plate_body": "身体", "rough_tunic": "身体", "reptile_tunic": "身体", "gobo_tunic": "身体", "beast_tunic": "身体", "umbral_tunic": "身体", "cotton_robe_top": "身体", "linen_robe_top": "身体", "bamboo_robe_top": "身体", "silk_robe_top": "身体", "radiant_robe_top": "身体", "enchanted_gloves": "手部", "pincer_gloves": "手部", "panda_gloves": "手部", "magnetic_gloves": "手部", "dodocamel_gauntlets": "手部", "dodocamel_gauntlets_refined": "手部", "sighted_bracers": "手部", "marksman_bracers": "手部", "marksman_bracers_refined": "手部", "chrono_gloves": "手部", "cheese_gauntlets": "手部", "verdant_gauntlets": "手部", "azure_gauntlets": "手部", "burble_gauntlets": "手部", "crimson_gauntlets": "手部", "rainbow_gauntlets": "手部", "holy_gauntlets": "手部", "rough_bracers": "手部", "reptile_bracers": "手部", "gobo_bracers": "手部", "beast_bracers": "手部", "umbral_bracers": "手部", "cotton_gloves": "手部", "linen_gloves": "手部", "bamboo_gloves": "手部", "silk_gloves": "手部", "radiant_gloves": "手部", "dairyhands_bottoms": "腿部", "foragers_bottoms": "腿部", "lumberjacks_bottoms": "腿部", "cheesemakers_bottoms": "腿部", "crafters_bottoms": "腿部", "tailors_bottoms": "腿部", "chefs_bottoms": "腿部", "brewers_bottoms": "腿部", "alchemists_bottoms": "腿部", "enhancers_bottoms": "腿部", "turtle_shell_legs": "腿部", "colossus_plate_legs": "腿部", "demonic_plate_legs": "腿部", "anchorbound_plate_legs": "腿部", "anchorbound_plate_legs_refined": "腿部", "maelstrom_plate_legs": "腿部", "maelstrom_plate_legs_refined": "腿部", "marine_chaps": "腿部", "revenant_chaps": "腿部", "griffin_chaps": "腿部", "kraken_chaps": "腿部", "kraken_chaps_refined": "腿部", "icy_robe_bottoms": "腿部", "flaming_robe_bottoms": "腿部", "luna_robe_bottoms": "腿部", "royal_water_robe_bottoms": "腿部", "royal_water_robe_bottoms_refined": "腿部", "royal_nature_robe_bottoms": "腿部", "royal_nature_robe_bottoms_refined": "腿部", "royal_fire_robe_bottoms": "腿部", "royal_fire_robe_bottoms_refined": "腿部", "cheese_plate_legs": "腿部", "verdant_plate_legs": "腿部", "azure_plate_legs": "腿部", "burble_plate_legs": "腿部", "crimson_plate_legs": "腿部", "rainbow_plate_legs": "腿部", "holy_plate_legs": "腿部", "rough_chaps": "腿部", "reptile_chaps": "腿部", "gobo_chaps": "腿部", "beast_chaps": "腿部", "umbral_chaps": "腿部", "cotton_robe_bottoms": "腿部", "linen_robe_bottoms": "腿部", "bamboo_robe_bottoms": "腿部", "silk_robe_bottoms": "腿部", "radiant_robe_bottoms": "腿部", "collectors_boots": "脚部", "shoebill_shoes": "脚部", "black_bear_shoes": "脚部", "grizzly_bear_shoes": "脚部", "polar_bear_shoes": "脚部", "pathbreaker_boots": "脚部", "pathbreaker_boots_refined": "脚部", "centaur_boots": "脚部", "pathfinder_boots": "脚部", "pathfinder_boots_refined": "脚部", "sorcerer_boots": "脚部", "pathseeker_boots": "脚部", "pathseeker_boots_refined": "脚部", "cheese_boots": "脚部", "verdant_boots": "脚部", "azure_boots": "脚部", "burble_boots": "脚部", "crimson_boots": "脚部", "rainbow_boots": "脚部", "holy_boots": "脚部", "rough_boots": "脚部", "reptile_boots": "脚部", "gobo_boots": "脚部", "beast_boots": "脚部", "umbral_boots": "脚部", "cotton_boots": "脚部", "linen_boots": "脚部", "bamboo_boots": "脚部", "silk_boots": "脚部", "radiant_boots": "脚部", "necklace_of_efficiency": "项链", "fighter_necklace": "项链", "ranger_necklace": "项链", "wizard_necklace": "项链", "necklace_of_wisdom": "项链", "necklace_of_speed": "项链", "philosophers_necklace": "项链", "earrings_of_gathering": "耳环", "earrings_of_essence_find": "耳环", "earrings_of_armor": "耳环", "earrings_of_regeneration": "耳环", "earrings_of_resistance": "耳环", "earrings_of_rare_find": "耳环", "earrings_of_critical_strike": "耳环", "philosophers_earrings": "耳环", "ring_of_gathering": "戒指", "ring_of_essence_find": "戒指", "ring_of_armor": "戒指", "ring_of_regeneration": "戒指", "ring_of_resistance": "戒指", "ring_of_rare_find": "戒指", "ring_of_critical_strike": "戒指", "philosophers_ring": "戒指", "small_pouch": "袋子", "medium_pouch": "袋子", "large_pouch": "袋子", "giant_pouch": "袋子", "gluttonous_pouch": "袋子", "guzzling_pouch": "袋子", "gatherer_cape": "背部", "gatherer_cape_refined": "背部", "artificer_cape": "背部", "artificer_cape_refined": "背部", "culinary_cape": "背部", "culinary_cape_refined": "背部", "chance_cape": "背部", "chance_cape_refined": "背部", "chimerical_quiver": "背部", "chimerical_quiver_refined": "背部", "sinister_cape": "背部", "sinister_cape_refined": "背部", "enchanted_cloak": "背部", "enchanted_cloak_refined": "背部", "cheese_brush": "挤奶工具", "verdant_brush": "挤奶工具", "azure_brush": "挤奶工具", "burble_brush": "挤奶工具", "crimson_brush": "挤奶工具", "rainbow_brush": "挤奶工具", "holy_brush": "挤奶工具", "celestial_brush": "挤奶工具", "cheese_shears": "采摘工具", "verdant_shears": "采摘工具", "azure_shears": "采摘工具", "burble_shears": "采摘工具", "crimson_shears": "采摘工具", "rainbow_shears": "采摘工具", "holy_shears": "采摘工具", "celestial_shears": "采摘工具", "cheese_hatchet": "伐木工具", "verdant_hatchet": "伐木工具", "azure_hatchet": "伐木工具", "burble_hatchet": "伐木工具", "crimson_hatchet": "伐木工具", "rainbow_hatchet": "伐木工具", "holy_hatchet": "伐木工具", "celestial_hatchet": "伐木工具", "cheese_hammer": "奶酪锻造工具", "verdant_hammer": "奶酪锻造工具", "azure_hammer": "奶酪锻造工具", "burble_hammer": "奶酪锻造工具", "crimson_hammer": "奶酪锻造工具", "rainbow_hammer": "奶酪锻造工具", "holy_hammer": "奶酪锻造工具", "celestial_hammer": "奶酪锻造工具", "cheese_chisel": "制作工具", "verdant_chisel": "制作工具", "azure_chisel": "制作工具", "burble_chisel": "制作工具", "crimson_chisel": "制作工具", "rainbow_chisel": "制作工具", "holy_chisel": "制作工具", "celestial_chisel": "制作工具", "cheese_needle": "缝纫工具", "verdant_needle": "缝纫工具", "azure_needle": "缝纫工具", "burble_needle": "缝纫工具", "crimson_needle": "缝纫工具", "rainbow_needle": "缝纫工具", "holy_needle": "缝纫工具", "celestial_needle": "缝纫工具", "cheese_spatula": "烹饪工具", "verdant_spatula": "烹饪工具", "azure_spatula": "烹饪工具", "burble_spatula": "烹饪工具", "crimson_spatula": "烹饪工具", "rainbow_spatula": "烹饪工具", "holy_spatula": "烹饪工具", "celestial_spatula": "烹饪工具", "cheese_pot": "冲泡工具", "verdant_pot": "冲泡工具", "azure_pot": "冲泡工具", "burble_pot": "冲泡工具", "crimson_pot": "冲泡工具", "rainbow_pot": "冲泡工具", "holy_pot": "冲泡工具", "celestial_pot": "冲泡工具", "cheese_alembic": "炼金工具", "verdant_alembic": "炼金工具", "azure_alembic": "炼金工具", "burble_alembic": "炼金工具", "crimson_alembic": "炼金工具", "rainbow_alembic": "炼金工具", "holy_alembic": "炼金工具", "celestial_alembic": "炼金工具", "cheese_enhancer": "强化工具", "verdant_enhancer": "强化工具", "azure_enhancer": "强化工具", "burble_enhancer": "强化工具", "crimson_enhancer": "强化工具", "rainbow_enhancer": "强化工具", "holy_enhancer": "强化工具", "celestial_enhancer": "强化工具"};
 
 // 战斗装备（配装制 · 一槽一件）= 全部装备槽 − 生活工具 − 两用槽（项链/耳环/戒指/袋子 有自己的分区）。
 // 顺序按需求写死：主手 / 副手 / 头部 / 身体 / 腿部 / 手部 / 脚部 / 背部（腿部与手部相对 EQUIP_TYPES 互换）。
@@ -1237,7 +1271,6 @@ let state = {
   assignment: null,
   result: null,
   binId: null,
-  encKey: null,
   isShared: false,
   deletedIds: [],
   globalBuffs: { gathering: 0, production: 0, enhancingSpeed: 0 },
@@ -2344,6 +2377,7 @@ function updateStaticText() {
   document.getElementById('btn-share').textContent = t('share');
   document.getElementById('btn-import-json').textContent = t('importData');
   document.getElementById('btn-export-json').textContent = t('exportData');
+  { const bmEl = document.getElementById('btn-bookmark'); if (bmEl) bmEl.textContent = t('bmBtn'); }
   document.getElementById('export-script-link').title = t('exportScriptTitle');
   document.getElementById('btn-calculate').textContent = t('calculate');
   document.getElementById('btn-lang').textContent = t('language');
@@ -3494,6 +3528,72 @@ function wearableMapToEquip(wearableMap) {
   return { equipment, ownedEquip };
 }
 
+// 把背包库存（书签从游戏 state.characterItems 读到的 [{itemHrid,enhancementLevel}]）
+// 并入 ownedEquip：按 iconId 反查它属于哪个 OWNED_SLOT 的装备家族，取每个家族强化最高的一件。
+// 穿戴件已在 wearableMapToEquip 里处理；这里只补背包里的备用/其他装备，让计算能择优。
+function mergeInventoryIntoOwned(ownedEquip, items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const best = {}; // slot -> { baseId: maxEnhance }
+  for (const it of items) {
+    const raw = it && it.itemHrid ? String(it.itemHrid).replace('/items/', '') : '';
+    if (!raw) continue;
+    const base = iconBaseId(raw);
+    const enh = clampEnhance(it.enhancementLevel);
+    for (const slot of OWNED_SLOTS) {
+      const fams = equipFamilies(slot);
+      let matched = false;
+      for (const f of fams) { if (f.id === base) { matched = true; break; } }
+      if (!matched) continue;
+      if (!best[slot]) best[slot] = {};
+      if (best[slot][base] == null || enh > best[slot][base]) best[slot][base] = enh;
+      break; // 一件物品只归入第一个匹配槽位
+    }
+  }
+  for (const slot in best) {
+    if (!ownedEquip[slot] || typeof ownedEquip[slot] !== 'object') ownedEquip[slot] = {};
+    for (const base in best[slot]) {
+      const enh = best[slot][base];
+      if (ownedEquip[slot][base] == null || enh > ownedEquip[slot][base]) ownedEquip[slot][base] = enh;
+    }
+  }
+}
+
+// 战斗装择优（与资料/配装导入共用 equipItemLevel 装备等级数据）：
+// 先比装备等级，等级相同再比强化；有等级数据的胜过没有的；都没有则纯比强化。
+function compareBattleGear(a, b) {
+  const la = equipItemLevel(a.iconId), lb = equipItemLevel(b.iconId);
+  if (la != null && lb != null) return (la - lb) || (a.enhance - b.enhance);
+  if (la != null) return 1;
+  if (lb != null) return -1;
+  return a.enhance - b.enhance;
+}
+
+// 用背包库存补齐空缺的战斗部位：每个空槽从背包里挑「装备等级最高、同级强化最高」的一件穿上。
+// 只填空缺、不覆盖已穿戴；不额外记录其它库存件。战斗装槽位由构建期 EQUIP_ICON_TO_SLOT 归类。
+function fillEmptyCombatFromBag(equipment, items) {
+  if (!Array.isArray(items) || !items.length) return;
+  const map = (typeof EQUIP_ICON_TO_SLOT !== 'undefined') ? EQUIP_ICON_TO_SLOT : {};
+  const cand = {};   // slot -> {iconId: enhance}
+  for (const it of items) {
+    const iconId = it && it.itemHrid ? String(it.itemHrid).replace('/items/', '') : '';
+    if (!iconId) continue;
+    const slot = map[iconId] || (iconId.endsWith('_refined') ? map[iconId.slice(0, -'_refined'.length)] : null);
+    if (!slot || COMBAT_EQUIP_SLOTS.indexOf(slot) < 0) continue;
+    const enh = clampEnhance(it.enhancementLevel);
+    if (!cand[slot]) cand[slot] = {};
+    if (cand[slot][iconId] == null || enh > cand[slot][iconId]) cand[slot][iconId] = enh;
+  }
+  for (const slot of COMBAT_EQUIP_SLOTS) {
+    if (equipment[slot] && equipment[slot].iconId) continue;   // 只填空缺
+    let best = null;
+    for (const [iconId, enh] of Object.entries(cand[slot] || {})) {
+      const cur = { iconId: iconId, enhance: enh };
+      if (!best || compareBattleGear(cur, best) > 0) best = cur;
+    }
+    if (best) equipment[slot] = best;
+  }
+}
+
 function parseMemberFromProfile(profile) {
   if (!profile) return null;
   const name = (profile.sharableCharacter && profile.sharableCharacter.name) || '';
@@ -3509,6 +3609,11 @@ function parseMemberFromProfile(profile) {
   const levels = SKILL_KEYS.map(k => skillMap[k] || 0);
   // 提取装备（与试炼配装导入共用同一转换逻辑）
   const { equipment, ownedEquip } = wearableMapToEquip(profile.wearableItemMap);
+  // 背包全部库存并入 ownedEquip（书签从游戏 state 读到时才有 characterItems）
+  mergeInventoryIntoOwned(ownedEquip, profile.characterItems);
+  // 空缺的战斗部位（穿戴里没有的槽）→ 从背包里按装备等级（同级强化）挑最高的一件补上。
+  // 只填空缺、不覆盖已穿戴，也不记录其它库存件。
+  fillEmptyCombatFromBag(equipment, profile.characterItems);
   const out = { name, levels, equipment, ownedEquip };
   // 逐人加成数据：公会成员导出的是完整 profile，可能携带这些字段（成就/房屋 buff 依赖它们）
   if (profile.achievementsValue) out.achievementsValue = profile.achievementsValue;
@@ -3518,15 +3623,13 @@ function parseMemberFromProfile(profile) {
   // 原始全表不保留（80 人 × 上百条会显著撑大共享载荷），只留影响试炼的 Beginner/Adept 两档。
   out.achievements = materializeMemberAchievements(profile);
   if (profile.houseActionTypeBuffsDict) out.houseActionTypeBuffsDict = profile.houseActionTypeBuffsDict;
-  if (profile.houseRoomLevels) out.houseRoomLevels = profile.houseRoomLevels;
-  if (profile.characterHouseRoomMap) out.characterHouseRoomMap = profile.characterHouseRoomMap;
+  // 原始 characterHouseRoomMap 不落盘：houseRooms 已物化全部 17 间房，原始表带 createdAt/updatedAt 极占空间。
   // 房屋房间等级：物化成成员级可编辑的 houseRooms（个人持久化数据，随共享上传）
   out.houseRooms = materializeMemberHouseRooms(profile);
-  // 个人神龛增益等级：共享资料里带 guildBuffLevelMap（键 /guild_buffs/<shrine>_skilling 或 _combat）。
-  // 每座神龛拆成 生活/战斗 两个槽位，直接物化成可编辑的 shrines 字段（同时保留原始 map 以便对照）。
+  // 个人神龛增益等级：每座神龛拆成 生活/战斗 两个槽位，物化成 shrines 后落盘。
+  // 原始 guildBuffLevelMap 不存：它与 shrines 重复，且会让共享 bin 体积无谓增大。
   out.shrines = {};
   const gmap = profile.guildBuffLevelMap;
-  if (gmap) out.guildBuffLevels = gmap;
   for (const s of shrineSlotsList()) {
     let lv = 0;
     if (gmap) {
@@ -3535,9 +3638,6 @@ function parseMemberFromProfile(profile) {
     }
     out.shrines[s.slot] = Math.max(0, Math.min(GUILD_SHRINE_MAX_LEVEL, lv));
   }
-  // 公会建筑等级（公会全局）：导出脚本可能把 guild_updated 里的 guildBuildingLevelMap 挂在成员对象上
-  if (profile._guildBuildingLevelMap) out._guildBuildingLevelMap = profile._guildBuildingLevelMap;
-  if (profile.guildBuildingLevelMap) out._guildBuildingLevelMap = profile.guildBuildingLevelMap;
   return out;
 }
 // === Import / Export ===
@@ -3609,22 +3709,30 @@ function isCombatLoadoutDump(obj) {
   return !!obj && !Array.isArray(obj) && obj._format === COMBAT_LOADOUT_FORMAT && Array.isArray(obj.members);
 }
 
+// 游戏 wearableItemMap 每项是完整对象（id / characterID / hash / createdAt ...），
+// 但计算器只用 itemHrid + enhancementLevel。共享 bin 免费套餐单条 100KB，
+// 所以落盘前只保留这两个字段，避免一份配装导出就把记录撑爆。
+function compactWearableMap(wm) {
+  const out = {};
+  if (!wm || typeof wm !== 'object') return out;
+  for (const [loc, item] of Object.entries(wm)) {
+    if (!item || !item.itemHrid) continue;
+    out[loc] = { itemHrid: String(item.itemHrid), enhancementLevel: clampEnhance(item.enhancementLevel) };
+  }
+  return out;
+}
+
 // 把 loadout_shared 归一化成计算器可存的配装子对象（不参与生活试炼计算，仅留存）。
 // actionTypeHrid 缺省值按 kind 定：生活档 /action_types/milking，战斗档 /action_types/combat。
 function normalizeLoadout(lo, kind) {
   if (!lo || typeof lo !== 'object') return null;
   const name = (lo.sharableCharacter && lo.sharableCharacter.name)
-    || (lo.character && lo.character.name) || '';
+    || (lo.character && lo.character.name) || lo.name || '';
   if (!name) return null;
   const defaultAction = kind === 'combat' ? '/action_types/combat' : '/action_types/milking';
   const out = { name: String(name), actionTypeHrid: String(lo.actionTypeHrid || defaultAction) };
   out.hasLoadout = lo.hasLoadout !== false;   // hasLoadout=false：空配装，照样保留
-  out.wearableItemMap = (lo.wearableItemMap && typeof lo.wearableItemMap === 'object') ? lo.wearableItemMap : {};
-  out.combatConsumables = Array.isArray(lo.combatConsumables) ? lo.combatConsumables : [];
-  const abilities = lo.equippedAbilities || lo.equipmentAbilities || [];
-  out.equippedAbilities = Array.isArray(abilities) ? abilities.filter(function(a){ return a && a.abilityHrid; }) : [];
-  out.abilityCombatTriggersMap = (lo.abilityCombatTriggersMap && typeof lo.abilityCombatTriggersMap === 'object') ? lo.abilityCombatTriggersMap : {};
-  out.consumableCombatTriggersMap = (lo.consumableCombatTriggersMap && typeof lo.consumableCombatTriggersMap === 'object') ? lo.consumableCombatTriggersMap : {};
+  out.wearableItemMap = compactWearableMap(lo.wearableItemMap);
   return out;
 }
 
@@ -3772,11 +3880,11 @@ function importCalculatorDump(dump) {
 // 静默 setItem 一次——旧实现就是这里 catch 吞掉 QuotaExceededError 导致数据假保存。
 async function persistAfterImport() {
   const data = JSON.stringify(sharedPayload());
-  if (state.isShared && state.binId && state.encKey) {
-    await forcePushToBin(data);
-  } else {
-    saveData();
+  if (state.isShared && state.binId && hasBinWriteKey()) {
+    return await forcePushToBin(data);   // false = 403 等，云端没写进去（binPut 已弹窗告警）
   }
+  saveData();
+  return true;
 }
 
 // === 合并导入（游戏成员 profile 数组 / 计算器备份）===
@@ -3876,6 +3984,9 @@ function mergeMemberFresh(old, fresh) {
     if (k === 'id' || k === '_ts') continue;
     if (k === 'levels' || k === 'equipment' || k === 'ownedEquip' || k === 'shrines'
         || k === 'houseRooms' || k === 'achievements') continue;
+    // 原始游戏表已物化成 shrines / houseRooms / 全局 guildBuildings，不再逐人复制（撑爆共享 bin）。
+    if (k === 'characterHouseRoomMap' || k === 'houseRoomLevels' || k === 'guildBuffLevels'
+        || k === '_guildBuildingLevelMap' || k === 'guildBuildingLevelMap') continue;
     if (k === 'name') { if (fresh.name) old.name = String(fresh.name); continue; }
     if (isBlankValue(fresh[k])) continue;   // 空字段不覆盖
     old[k] = fresh[k];
@@ -4189,16 +4300,38 @@ function migrateLegacyStorage() {
   }
   return null;
 }
+// 共享载荷瘦身：只删「已物化」的冗余字段和配装原始字段，不动任何参与计算的数据。
+// 旧缓存 / 旧 bin 里可能还有这些字段，所以读写两端都过一遍，避免 100KB 上限问题复发。
+function compactMemberForSave(m) {
+  if (!m || typeof m !== 'object') return m;
+  const out = Object.assign({}, m);
+  if (out.houseRooms && typeof out.houseRooms === 'object') delete out.characterHouseRoomMap;
+  if (out.shrines && typeof out.shrines === 'object') delete out.guildBuffLevels;
+  delete out._guildBuildingLevelMap;   // 公会建筑已提升到 state.guildBuildings（全局）
+  for (const [field, kind] of [['skillingLoadout','skilling'], ['combatLoadout','combat']]) {
+    if (!out[field]) continue;
+    const c = normalizeLoadout(out[field], kind);
+    if (c) out[field] = c; else delete out[field];
+  }
+  return out;
+}
+function compactPayload(data) {
+  if (!data || typeof data !== 'object') return data;
+  const out = Object.assign({}, data);
+  if (Array.isArray(data.members)) out.members = data.members.map(compactMemberForSave);
+  return out;
+}
+
 // 共享/持久化的统一载荷：成员（含个人神龛）+ 试炼槽 + 公会建筑（公会全局）等
 function sharedPayload() {
-  return {
+  return compactPayload({
     guild: state.guild,
     members: state.members,
     trials: state.trials,
     deletedIds: state.deletedIds,
     guildBuildings: state.guildBuildings || {},
     guildBuildingsTs: state.guildBuildingsTs || 0
-  };
+  });
 }
 function saveData() {
   const data = JSON.stringify(sharedPayload());
@@ -4221,7 +4354,7 @@ function saveData() {
       }
     }
   }
-  if (state.isShared && state.binId && state.encKey) saveToBin(data);
+  if (state.isShared && state.binId && hasBinWriteKey()) saveToBin(data);
 }
 function loadData() {
   try {
@@ -4235,7 +4368,7 @@ function loadData() {
       raw = migrateLegacyStorage();
     }
     if (raw) {
-      Object.assign(state, JSON.parse(raw));
+      Object.assign(state, compactPayload(JSON.parse(raw)));
       if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
       if (!state.guildBuildings) state.guildBuildings = guildBuildingAllKeys().reduce((o,k)=>(o[k]=0,o),{});
       if (!state.guildBuildingsTs) state.guildBuildingsTs = 0;
@@ -4247,10 +4380,51 @@ function loadData() {
 
 // === jsonbin.io ===
 const BIN_BASE = 'https://api.jsonbin.io/v3/b';
-// 固定的分享加密密码：历史 bin 均用此密码加密，保留以保证兼容现有数据，且不写入分享 URL
-const SHARE_PASSWORD = 'layu';
 let saveTimer = null;
 let isSaving = false;
+// 没有 Master Key 的访客只读：公开 bin 虽然裸 PUT 也能写，但会不断堆版本，这里直接禁止。
+function hasBinWriteKey() { return !!(localStorage.getItem('mwi_master_key') || ''); }
+// bin 写入统一检查响应状态。公开 bin 读取无需 key；写入带 X-Master-Key。
+// 带 key 时同时发 X-Bin-Versioning:false，避免公开 bin 每次更新都堆一个版本（上限 1000）。
+async function binPut(rec) {
+  const mk = localStorage.getItem('mwi_master_key') || '';
+  if (!mk) {
+    if (typeof alert === 'function') alert(t('binReadOnly'));
+    return false;
+  }
+  const pHeaders = {'Content-Type':'application/json'};
+  pHeaders['X-Master-Key'] = mk;
+  pHeaders['X-Bin-Versioning'] = 'false';
+  const body = JSON.stringify(rec);
+  const bodyBytes = (typeof TextEncoder !== 'undefined') ? new TextEncoder().encode(body).length : body.length;
+  if (bodyBytes > 95000) console.warn('[mwi] bin PUT body 接近 jsonbin 免费套餐 100KB 上限:', bodyBytes, 'bytes');
+  const resp = await fetch(BIN_BASE+'/'+state.binId, { method:'PUT', headers:pHeaders, body });
+  if (!resp.ok) {
+    // 读出真实错误体：jsonbin 返回 {message:...}，Cloudflare 拦截则是 "error code: 1010"
+    let detail = '', rawMsg = '';
+    try {
+      const text = await resp.text();
+      let msg = text;
+      try { const j = JSON.parse(text); if (j && j.message) msg = j.message; } catch(_) {}
+      rawMsg = String(msg).slice(0, 120);
+      detail = ' · ' + rawMsg;
+    } catch(_) {}
+    // 免费套餐超限时给出针对性提示，不再笼统归咎于 Master Key / 频率 / 网络。
+    const tooLarge = /100\s*kb|over 100kb|free users cannot update/i.test(rawMsg);
+    const base = resp.status === 403
+      ? t(tooLarge ? 'binWriteTooLarge' : 'binWriteDenied')
+      : t('binWriteFailed').replace('{status}', resp.status).replace('{detail}', detail);
+    const msg = resp.status === 403 ? (base + detail) : base;
+    console.error('[mwi] bin PUT', resp.status, msg);
+    if (typeof alert === 'function' && !state._binErrWarned) {
+      state._binErrWarned = true;
+      alert(msg);
+    }
+    return false;
+  }
+  state._binErrWarned = false;
+  return true;
+}
 function saveToBin(data) {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -4259,29 +4433,24 @@ function saveToBin(data) {
     try {
       const localData = JSON.parse(data);
       const mk = localStorage.getItem('mwi_master_key') || '';
-      // Fetch latest from bin for merge
+      // Fetch latest from bin for merge (public bin is readable without key)
       let merged = localData;
       try {
         const rHeaders = mk ? {'X-Master-Key':mk} : {};
         const resp = await fetch(BIN_BASE+'/'+state.binId+'/latest', { headers:rHeaders });
         if (resp.ok) {
           const json = await resp.json();
-          if (json.record && json.record.d) {
-            const dec = await decryptRecord(json.record, state.encKey);
+          if (json.record && json.record.z) {
+            const dec = await decodeRecord(json.record);
             const remote = JSON.parse(dec);
-            merged = mergeState(localData, remote);
+            merged = compactPayload(mergeState(localData, remote));
           }
         }
       } catch(e) { console.warn('Merge fetch failed, saving without merge:', e); }
-      // Encrypt and PUT merged data
-      const dataToSave = JSON.stringify(merged);
-      const rec = await encryptRecord(dataToSave, state.encKey);
-      const pHeaders = {'Content-Type':'application/json'};
-      if (mk) pHeaders['X-Master-Key'] = mk;
-      await fetch(BIN_BASE+'/'+state.binId, {
-        method:'PUT', headers:pHeaders,
-        body: JSON.stringify(rec)
-      });
+      const dataToSave = JSON.stringify(compactPayload(merged));
+      const rec = await encodeRecord(dataToSave);
+      const ok = await binPut(rec);
+      if (!ok) return;   // 403 等：不要同步内存状态，避免把「没写成功」当成成功
       // Sync merged result back to local state (picks up others' changes)
       state.members = merged.members;
       state.trials = merged.trials;
@@ -4292,22 +4461,23 @@ function saveToBin(data) {
     isSaving = false;
   }, 2000);
 }
-// 导入等场景：立即全量覆盖 bin，不做合并，确保本地数据成为权威版本，避免被旧数据覆盖
+// 导入等场景：立即全量覆盖 bin，不做合并，确保本地数据成为权威版本，避免被旧数据覆盖。
+// 返回是否写入成功；调用方（导入流程）据此把「仅存本地」的事实告诉用户。
 async function forcePushToBin(data) {
   try {
     clearTimeout(saveTimer);
-    const mk = localStorage.getItem('mwi_master_key') || '';
-    const rec = await encryptRecord(data, state.encKey);
-    const pHeaders = { 'Content-Type':'application/json' };
-    if (mk) pHeaders['X-Master-Key'] = mk;
-    await fetch(BIN_BASE+'/'+state.binId, { method:'PUT', headers:pHeaders, body: JSON.stringify(rec) });
-    const parsed = JSON.parse(data);
+    const payload = compactPayload(JSON.parse(data));
+    const rec = await encodeRecord(JSON.stringify(payload));
+    const ok = await binPut(rec);
+    if (!ok) return false;
+    const parsed = payload;
     state.members = parsed.members;
     state.trials = parsed.trials;
     state.deletedIds = parsed.deletedIds || [];
     if (parsed.guildBuildings) state.guildBuildings = parsed.guildBuildings;
     state.guildBuildingsTs = parsed.guildBuildingsTs || state.guildBuildingsTs || 0;
-  } catch(e) { console.error('Force push failed:', e); }
+    return true;
+  } catch(e) { console.error('Force push failed:', e); return false; }
 }
 
 function mergeState(local, remote) {
@@ -4346,13 +4516,19 @@ async function loadFromBin() {
     const headers = mk ? {'X-Master-Key':mk} : {};
     const resp = await fetch(BIN_BASE+'/'+state.binId+'/latest', { headers });
     if (!resp.ok) {
-      console.error('Load HTTP', resp.status);
+      let detail = '';
+      try { const body = await resp.text(); detail = ' · ' + body.slice(0, 120); } catch(_) {}
+      console.error('[mwi] Load HTTP', resp.status, detail);
+      if (typeof alert === 'function' && !state._binLoadWarned) {
+        state._binLoadWarned = true;
+        alert('无法从云端读取数据（HTTP '+resp.status+detail+'）。当前显示的是本地缓存，点「刷新」可重试。');
+      }
       return false;
     }
     const json = await resp.json();
-    if (json.record && json.record.d) {
-      const dec = await decryptRecord(json.record, state.encKey);
-      const data = JSON.parse(dec);
+    if (json.record && json.record.z) {
+      const dec = await decodeRecord(json.record);
+      const data = compactPayload(JSON.parse(dec));
       Object.assign(state, data);
       if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
       if (!state.guildBuildings) state.guildBuildings = {};
@@ -4362,10 +4538,9 @@ async function loadFromBin() {
   } catch(e) { console.error('Load failed:', e); }
   return false;
 }
-async function createBin(guild, password, masterKey) {
-  const encKey = await deriveKey(password, guild);
+async function createBin(guild, masterKey) {
   const data = JSON.stringify(Object.assign(sharedPayload(), { guild }));
-  const rec = await encryptRecord(data, encKey);
+  const rec = await encodeRecord(data);
   const resp = await fetch(BIN_BASE, {
     method:'POST',
     headers:{'Content-Type':'application/json','X-Master-Key':masterKey,'X-Bin-Name':'MWI_'+guild,'X-Bin-Private':'false'},
@@ -4395,12 +4570,6 @@ async function gunzipBytes(bytes) {
   return new Uint8Array(ab);
 }
 
-// === Crypto ===
-async function deriveKey(password, salt) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({name:'PBKDF2',salt:enc.encode(salt),iterations:100000,hash:'SHA-256'}, keyMaterial, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
-}
 // Chunked base64 to avoid call-stack overflow on large payloads
 function bytesToBase64(bytes) {
   let bin = '';
@@ -4416,30 +4585,17 @@ function base64ToBytes(b64) {
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
-async function encryptBytes(bytes, key) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, bytes);
-  const combined = new Uint8Array(iv.length + ct.byteLength);
-  combined.set(iv); combined.set(new Uint8Array(ct), iv.length);
-  return bytesToBase64(combined);
-}
-async function decryptBytes(b64, key) {
-  const combined = base64ToBytes(b64);
-  const iv = combined.slice(0, 12); const ct = combined.slice(12);
-  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv}, key, ct));
-}
-// gzip + encrypt. Always compressed. Returns { d }.
-async function encryptRecord(text, key) {
+// gzip + base64，存 {z}。不再做 AES 加密：bin 本身就是 public，固定密码没有保密意义。
+async function encodeRecord(text) {
   const bytes = new TextEncoder().encode(text);
   const gz = await gzipBytes(bytes);
-  const d = await encryptBytes(gz, key);
-  return { d };
+  return { z: bytesToBase64(gz) };
 }
-// Decrypt + gunzip. Returns the original JSON string.
-async function decryptRecord(rec, key) {
-  const bytes = await decryptBytes(rec.d, key);
-  const gz = await gunzipBytes(bytes);
-  return new TextDecoder().decode(gz);
+async function decodeRecord(rec) {
+  if (!rec || !rec.z) return null;
+  const gz = base64ToBytes(rec.z);
+  const bytes = await gunzipBytes(gz);
+  return new TextDecoder().decode(bytes);
 }
 
 // === Share Dialog ===
@@ -4457,18 +4613,36 @@ function openShareDialog() {
     (state.binId ? '<div class="share-field"><label>'+t('currentUrl')+'</label><div class="share-url" onclick="copyShareUrl()">'+escHtml(getShareUrl())+'</div></div>' : '')+
     '<div class="modal-actions">'+
       '<button class="btn" onclick="closeShareDialog()">'+t('closeBtn')+'</button>'+
-      (state.binId ? '' : '<button class="btn btn-primary" onclick="createShare()">'+t('createShare')+'</button>')+
+      (state.binId
+        ? '<button class="btn" onclick="saveMasterKey()">'+t('saveKeyBtn')+'</button>'+
+          '<button class="btn btn-primary" onclick="retrySync()">'+t('retrySyncBtn')+'</button>'
+        : '<button class="btn btn-primary" onclick="createShare()">'+t('createShare')+'</button>')+
     '</div>'+
   '</div>';
   document.body.appendChild(overlay);
+}
+// 已有 bin 时补录/更新 Master Key（访客打开分享链接默认没有 key → 只能读不能写）。
+function saveMasterKey() {
+  const inp = document.getElementById('share-masterkey');
+  const mk = inp ? inp.value.trim() : '';
+  if (!mk) { alert(t('fillAll')); return; }
+  localStorage.setItem('mwi_master_key', mk);
+  state._binErrWarned = false;   // 换了 key，允许下次失败重新告警
+  updateConnectionStatus();
+  alert(t('keySaved'));
+}
+async function retrySync() {
+  if (!state.binId) return;
+  if (!hasBinWriteKey()) { alert(t('binReadOnly')); return; }
+  const ok = await forcePushToBin(JSON.stringify(sharedPayload()));
+  if (ok) { alert(t('syncOk')); updateConnectionStatus(); }
 }
 function closeShareDialog() { const o = document.getElementById('share-overlay'); if (o) o.remove(); }
 function getShareUrl() {
   const url = new URL(window.location.href);
   url.searchParams.set('guild', state.guild);
   url.searchParams.set('bin', state.binId);
-  // 密码已固定为常量 SHARE_PASSWORD，不写入 URL（现有 bin 兼容）
-  // if (mk) url.searchParams.set('mk', mk);
+  // Master Key 不写入 URL，只存创建者本地；访客需要写权限时在共享设置里补录。
   return url.toString();
 }
 function copyShareUrl() {
@@ -4480,11 +4654,11 @@ async function createShare() {
   if (!guild || !masterKey) { alert(t('fillAll')); return; }
   try {
     localStorage.setItem('mwi_master_key', masterKey);
+    state._binErrWarned = false;
     state.guild = guild;
-    const binId = await createBin(guild, SHARE_PASSWORD, masterKey);
+    const binId = await createBin(guild, masterKey);
     if (!binId) { alert(t('createFailed')); return; }
     state.binId = binId;
-    state.encKey = await deriveKey(SHARE_PASSWORD, guild);
     state.isShared = true;
     saveData();
     closeShareDialog();
@@ -4497,7 +4671,8 @@ function updateConnectionStatus() {
   const el = document.getElementById('conn-status');
   const refreshBtn = document.getElementById('btn-refresh');
   if (state.isShared) {
-    el.textContent = t('connected')+': '+state.guild;
+    const hasKey = !!(localStorage.getItem('mwi_master_key') || '');
+    el.textContent = t('connected')+': '+state.guild+(hasKey ? '' : ' · '+t('binReadOnly'));
     if (refreshBtn) refreshBtn.style.display = '';
   } else {
     el.textContent = t('offlineMode');
@@ -4515,6 +4690,197 @@ async function refreshFromServer() {
   }
 }
 
+// === 一键书签：在游戏页点一下，把自己的装备数据送进计算器 ===
+// 原理：书签是一段 javascript: URL，在【游戏标签页】里执行。它从 React fiber 挖出
+// 游戏实时 state，一次拿到角色名 + 当前穿戴 + 背包全部库存，gzip+base64 编码后
+// window.open 计算器并带 #mwiBookmark=<payload>。计算器启动时解压 + 导入。
+// 刻意不走任何 WS 回退：向游戏发无效角色名（view_profile __self__）会触发游戏
+// “找不到角色名称”红字报错。读不到 state 就直接给出明确提示，不再惊扰游戏。
+function bookmarkRuntimeSource(calcUrl) {
+  // 书签在游戏页运行：从 React fiber 挖出游戏实时 state，一次拿到角色名 +
+  // 当前穿戴 + 背包全部库存。只读游戏 state，不发任何游戏指令。
+  return '(function(){'
+    + 'var CALC=' + JSON.stringify(String(calcUrl || '')) + ';'
+    + 'var got=null, DONE=false;'
+    + 'function log(m){try{console.log("[MWI书签]",m)}catch(e){}}'
+    + 'function b64(u8){var s="";for(var i=0;i<u8.length;i+=32768)s+=String.fromCharCode.apply(null,u8.subarray(i,i+32768));return btoa(s)}'
+    + 'function enc(obj){try{var s=JSON.stringify(obj),bytes=new TextEncoder().encode(s);'
+      + 'if(typeof CompressionStream==="function"){return new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer().then(function(ab){return "G"+b64(new Uint8Array(ab))}).catch(function(){return "R"+b64(bytes)})}'
+      + 'return Promise.resolve("R"+b64(bytes))}catch(e){return Promise.resolve("")}}'
+    + 'function finish(){'
+      + 'if(DONE||!got)return;DONE=true;'
+      + 'enc(got).then(function(payload){'
+        + 'if(!payload){alert("MWI书签：编码失败");return}'
+        + 'var url=CALC+"#mwiBookmark="+encodeURIComponent(payload);'
+        + 'var w=null;try{w=window.open(url,"mwiCalculator")}catch(e){}'
+        + 'if(w){try{w.focus()}catch(e){}}'  // 已打开的计算器 tab 只改 hash 时不 reload，显式聚焦让结果可见
+        + 'if(!w){try{navigator.clipboard.writeText(payload)}catch(e){};alert("MWI书签：已复制数据到剪贴板，请在计算器里点【从剪贴板导入】")}'
+        + 'log("已送出 "+((got.sharableCharacter&&got.sharableCharacter.name)||"?")+" 的数据（含全部库存）")'
+      + '})}'
+    + 'function vals(c){if(Array.isArray(c))return c;if(c instanceof Map)return Array.from(c.values());if(c&&typeof c==="object")return Object.keys(c).map(function(k){return c[k]});return []}'
+    + 'function getHost(){try{'
+      + 'if(window.mwiHelper&&window.mwiHelper.game)return window.mwiHelper.game;'
+      + 'if(window.mwi&&window.mwi.game)return window.mwi.game;'
+      + 'var sels=["[class^=GamePage]","[class*=GamePage_gamePage__]","#root"];'
+      + 'for(var i=0;i<sels.length;i++){var els=document.querySelectorAll(sels[i]);'
+        + 'for(var j=0;j<els.length;j++){var k=Reflect.ownKeys(els[j]).find(function(x){return String(x).indexOf("__reactFiber$")===0});'
+          + 'var f=k?els[j][k]:null;while(f){var h=f.stateNode;'
+            + 'if(h&&typeof h==="object"&&(typeof h.handleSwitchCharacter==="function"||typeof h.handleGoToMarketplace==="function"))return h;'
+            + 'f=f.return}}}'
+      + '}catch(e){log("getHost 失败 "+e.message)}return null}'
+    + 'function fromState(){try{'
+      + 'var host=getHost();var st=host&&host.state;if(!st)return null;'
+      // 真实游戏 state：物品/技能都是 Map，字段名为 characterItemMap / characterSkillMap。
+      + 'var items=vals(st.characterItemMap);if(!items.length)return null;'
+      + 'var name=(st.character&&st.character.name)||(st.characterInfo&&st.characterInfo.name)||"";'
+      + 'if(!name)return null;'
+      + 'var wm={},bag=[];'
+      + 'for(var i=0;i<items.length;i++){var it=items[i];if(!it||!it.itemHrid)continue;'
+        + 'var loc=it.itemLocationHrid||"";var rec={itemHrid:it.itemHrid,enhancementLevel:Number(it.enhancementLevel)||0};'
+        + 'if(loc&&loc.indexOf("/item_locations/inventory")<0)wm[loc]=rec;else bag.push(rec)}'
+      + 'var prof={sharableCharacter:{name:name},characterSkills:vals(st.characterSkillMap),wearableItemMap:wm,characterItems:bag};'
+      // 成就：真实字段是 characterAchievementMap（Map，value={achievementHrid,isCompleted}）。
+      // 导入端 normalizeAchievementsMap 需要 {achHrid:bool}，这里归一化成布尔表。
+      + 'var achv={};var am=st.characterAchievementMap;if(am){var aa=(am instanceof Map)?Array.from(am.values()):vals(am);'
+        + 'for(var a=0;a<aa.length;a++){var au=aa[a];if(au&&au.achievementHrid)achv[au.achievementHrid]=(au.isCompleted===true||au.isCompleted===1)}}'
+      + 'if(Object.keys(achv).length)prof.characterAchievements=achv;'
+      + 'if(st.characterHouseRoomDict)prof.characterHouseRoomMap=st.characterHouseRoomDict;'
+      + 'if(st.achievementActionTypeBuffsDict)prof.achievementActionTypeBuffsDict=st.achievementActionTypeBuffsDict;'
+      // 神龛：characterGuildBuffDict 的 value 是 {level:N} 对象，导入端期望 {hrid:number}，取出 level。
+      + 'var gb={};var gd=st.characterGuildBuffDict;if(gd){Object.keys(gd).forEach(function(gk){var gv=gd[gk];gb[gk]=(gv&&gv.level!=null)?Number(gv.level):0})}'
+      + 'if(Object.keys(gb).length)prof.guildBuffLevelMap=gb;'
+      + 'log("从游戏状态读到 "+name+"：穿戴 "+Object.keys(wm).length+" 件、库存 "+bag.length+" 件、技能 "+prof.characterSkills.length+" 项");'
+      + 'return prof'
+      + '}catch(e){log("fromState 失败 "+e.message);return null}}'
+    // 唯一路径：直接读游戏 state（含背包库存）。不发任何 WS 指令，避免游戏报错。
+    + 'var direct=fromState();'
+    + 'if(direct){got=direct;finish();return;}'
+    + 'alert("MWI书签：没读到游戏数据。请确认已登录游戏，且当前在角色游戏页面（网址含 game?characterId=），然后重试。");'
+    + 'log("读取游戏状态失败：未找到角色 state");'
+    + '})();';
+}
+function makeBookmarkUrl(calcUrl) {
+  return 'javascript:' + bookmarkRuntimeSource(calcUrl);
+}
+function openBookmarkDialog() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'bookmark-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) closeBookmarkDialog(); };
+  const calcUrl = window.location.href.split('#')[0];
+  // 打开即自动生成书签链接，无需再点“生成书签”按钮。
+  const href = makeBookmarkUrl(calcUrl);
+  const stepBadge = 'display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;'
+    + 'background:var(--accent,#4a90e2);color:#fff;font-size:13px;font-weight:700;flex:0 0 auto';
+  overlay.innerHTML = '<div class="modal-dialog" style="max-width:560px">'+
+    '<div class="modal-title"><span>'+t('bmTitle')+'</span><button class="modal-close" onclick="closeBookmarkDialog()">&times;</button></div>'+
+
+    '<div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin:2px 0 14px">'+t('bmIntro')+'</div>'+
+
+    // 安全说明卡片：明确只读、不发请求、无自动化，让用户放心
+    '<div style="border:1px solid var(--border,#d9d9e3);border-left:3px solid #2e9e5b;background:var(--bg-subtle,#f5f6fa);'
+      + 'border-radius:8px;padding:11px 14px;margin-bottom:16px">'
+      + '<div style="font-size:13px;font-weight:600;color:#2e9e5b;margin-bottom:5px">🛡 '+t('bmSafeTitle')+'</div>'
+      + '<div style="font-size:12px;color:var(--text);line-height:1.7">'+t('bmSafe')+'</div>'
+    +'</div>'+
+
+    // 手机浏览器不支持提示
+    '<div style="font-size:11px;color:#a8620a;background:rgba(220,150,20,.1);border-radius:6px;padding:7px 10px;margin-bottom:14px">⚠ '+t('bmMobile')+'</div>'+
+
+    // 步骤①：拖链接到书签栏
+    '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">'
+      + '<span style="'+stepBadge+'">1</span>'
+      + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:600;margin-bottom:8px">'+t('bmStep1')+'</div>'
+        + '<div id="bm-link" style="font-size:12px">'
+          + '<a class="btn btn-sm" href="'+escHtml(href)+'" draggable="true" title="'+escHtml(t('bmStep1'))+'" style="margin-right:8px">'+t('bmDrag')+'</a>'
+          + '<button class="btn btn-sm" onclick="copyBookmark()">'+t('bmCopy')+'</button>'
+          + '<textarea id="bm-url" readonly style="width:100%;height:50px;margin-top:8px;font-size:10px;word-break:break-all">'+escHtml(href)+'</textarea>'
+        + '</div>'
+      + '</div>'
+    + '</div>'+
+
+    // 步骤②：在游戏角色页点书签
+    '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">'
+      + '<span style="'+stepBadge+'">2</span>'
+      + '<div style="flex:1;font-size:13px;color:var(--text);line-height:1.7">'+t('bmStep2')+'</div>'
+    + '</div>'+
+
+    '<div style="font-size:11px;color:var(--text-muted);margin:4px 0 14px;padding-left:32px">'+t('bmHint')+'</div>'+
+
+    '<div class="modal-actions">'+
+      '<button class="btn" onclick="closeBookmarkDialog()">'+t('closeBtn')+'</button>'+
+      '<button class="btn" onclick="importFromClipboard()">'+t('bmPaste')+'</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(overlay);
+  overlay._calcUrl = calcUrl;
+}
+// 兼容旧调用：链接在打开对话框时已生成，此函数仅作幂等刷新。
+function buildBookmarkLink() {
+  const overlay = document.getElementById('bookmark-overlay');
+  const calcUrl = overlay ? overlay._calcUrl : window.location.href.split('#')[0];
+  if (!overlay) return;
+  const href = makeBookmarkUrl(calcUrl);
+  const box = document.getElementById('bm-link');
+  if (box) box.innerHTML =
+    '<a class="btn btn-sm" href="'+escHtml(href)+'" draggable="true" title="'+escHtml(t('bmStep1'))+'" style="margin-right:8px">'+t('bmDrag')+'</a>'+
+    '<button class="btn btn-sm" onclick="copyBookmark()">'+t('bmCopy')+'</button>'+
+    '<textarea id="bm-url" readonly style="width:100%;height:50px;margin-top:8px;font-size:10px;word-break:break-all">'+escHtml(href)+'</textarea>';
+}
+function copyBookmark() {
+  const ta = document.getElementById('bm-url');
+  if (!ta) return;
+  const text = ta.value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => alert(t('bmCopied')));
+  } else { ta.select(); document.execCommand('copy'); alert(t('bmCopied')); }
+}
+function closeBookmarkDialog() { const o = document.getElementById('bookmark-overlay'); if (o) o.remove(); }
+
+// 解压书签 payload（G=gzip, R=裸 base64），再走现有 profile 合并导入。
+async function importBookmarkPayload(payload) {
+  let text;
+  try {
+    const bytes = base64ToBytes(String(payload).slice(1));
+    const raw = String(payload)[0] === 'G' ? await gunzipBytes(bytes) : bytes;
+    text = new TextDecoder().decode(raw);
+    const profile = JSON.parse(text);
+    const name = (profile && profile.sharableCharacter && profile.sharableCharacter.name || '').trim();
+    const stat = mergeMembersFromProfiles([profile]);
+    if (!stat && !name) { alert(t('importFailed')); return; }
+    await persistAfterImport();
+    renderAll();
+    if (state.members.length > 0) calculate();
+    // 个人书签是单人导入：不弹批量导入的「更新/新增/保留」报告，
+    // 而是直接打开该成员详情页，让用户立即看到刚导入的技能/装备。
+    if (name) {
+      const m = state.members.find(x => String(x.name || '').trim() === name);
+      if (m) { openMemberDetail(m.id); return; }
+    }
+    if (stat) showImportReport(stat);
+  } catch (e) {
+    console.error('[bookmark] import failed:', e);
+    alert(t('bmImportFail') || ('书签数据导入失败: ' + e.message));
+  }
+}
+function handleBookmarkHash() {
+  const m = /(?:^|#)mwiBookmark=([^&]+)/.exec(window.location.hash || '');
+  if (!m) return;
+  const payload = decodeURIComponent(m[1]);
+  // 先清 hash，避免刷新重复导入
+  try { history.replaceState(null, '', window.location.pathname + window.location.search); }
+  catch (e) { window.location.hash = ''; }
+  importBookmarkPayload(payload);
+}
+async function importFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text || (text[0] !== 'G' && text[0] !== 'R')) { alert(t('bmImportFail') || '剪贴板里没有书签数据'); return; }
+    await importBookmarkPayload(text.trim());
+  } catch (e) { alert('无法读取剪贴板: ' + e.message); }
+}
+
 // === Init ===
 async function init() {
   loadPrefs();
@@ -4526,7 +4892,6 @@ async function init() {
   if (mk) localStorage.setItem('mwi_master_key', mk);
   if (guild && bin) {
     state.guild = guild; state.binId = bin; state.isShared = true;
-    state.encKey = await deriveKey(SHARE_PASSWORD, guild);
     let loadedFromShare = await loadFromBin();
     updateConnectionStatus();
     if (!state.trials) state.trials = [{skill:0,max:20},{skill:1,max:20},{skill:2,max:20},{skill:3,max:20}];
@@ -4539,7 +4904,15 @@ async function init() {
     applyTrialCaps();
     renderAll();
   }
+  handleBookmarkHash();   // 书签回传：解压 payload 并导入（异步，不阻塞首屏）
 }
+// 计算器 tab 已打开时，书签的 window.open 只会改 hash、不触发 reload/init。
+// 监听 hashchange 才能在复用同一 tab 的情况下也完成导入 + 自动聚焦。
+window.addEventListener('hashchange', handleBookmarkHash);
+// 给计算器标签命名：书签在游戏页用 window.open(url,"mwiCalculator") 时，
+// 会复用这个已打开的标签（只改 hash → 触发上面的 hashchange 导入），
+// 而不是新开一个计算器标签。这实现了「点书签跳回原来那个计算器」。
+try { if (!window.name) window.name = 'mwiCalculator'; } catch (e) {}
 init();
 
 </script>
