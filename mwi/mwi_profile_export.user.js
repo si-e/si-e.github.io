@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MWI 采集器 / 成员资料 · 生活配装 · 战斗配装
 // @namespace    https://www.milkywayidle.com/
-// @version      3.0.5
-// @description  MWI Trial Calculator capture: member profiles, skilling loadouts, combat loadouts. Three buttons, real UI clicks, three JSON exports.
+// @version      3.1.1
+// @description  MWI Trial Calculator capture: auto batch or manual-open records for profiles, skilling loadouts and combat loadouts; three JSON exports.
 // @description:zh-CN 三条链路，全部模拟真人依次点击：① 成员页采「资料」② 试炼页采「查看配装·生活」③ 试炼页采「查看配装·战斗」。各自导出 JSON，计算器依次导入。
 // @author       Guild Tools
 // @license      MIT
@@ -29,12 +29,16 @@
  *
  * 分流：点「查看配装」前记下 {name, kind}，回包 loadout_shared 据此落到生活/战斗两个 Map，
  * 同一个人在两类试炼各采一份、互不覆盖。三份 JSON 的计算器导入格式与 v2 完全一致。
+ *
+ * v3.1.0 —— 面板拆成「自动采集」与「导出」两块：脚本不代点的手动打开「资料 / 查看配装」
+ * 回包也计入同一份缓存，导出区三个按钮显示计数并可单独导出；自动采集完成后不再自动导出。
+ * v3.1.1 —— 修复误把点击目标改成外层 wrapper：脚本合成事件点 wrapper 不弹菜单，改回成员表内的 [data-name]。
  */
 
 (function () {
     'use strict';
 
-    const SCRIPT_VERSION = '3.0.5';
+    const SCRIPT_VERSION = '3.1.1';
     const STORAGE_KEY = 'mwi-trial-export:v1';
 
     const T = {
@@ -74,6 +78,8 @@
         running: false,
         stop: false,
         collecting: false,     // 采集中才剥离 isAuto，避免影响玩家自己的操作
+        manualCapture: true,   // 默认记录玩家自己手动打开的「资料 / 查看配装」回包
+        lastManualTrialKind: null, // 被动记下玩家自己点开的试炼卡类型，用于给手动配装归类
         rewroteAuto: 0,        // 调试计数：剥离了多少个 isAuto
         panel: null,
         pace: T.clickGap,
@@ -174,6 +180,20 @@
         if (g.name && !state.guild.name) state.guild.name = String(g.name);
         if (g.id && !state.guild.id) state.guild.id = String(g.id);
     }
+    // 玩家手动点「查看配装」时没有 state.awaitingLoadout，只能从回包自身或最近点开的试炼卡判断生活/战斗。
+    function manualLoadoutKind(lo) {
+        let hay = '';
+        for (const o of [lo, lo?.loadout, lo?.characterLoadout]) {
+            if (!o || typeof o !== 'object') continue;
+            for (const [k, v] of Object.entries(o)) {
+                if (/kind|type|action/i.test(k) && v != null) hay += ' ' + String(v);
+            }
+        }
+        hay = hay.toLowerCase();
+        if (/combat|battle|战斗/.test(hay)) return 'combat';
+        if (/skilling|skill|生活/.test(hay)) return 'skilling';
+        return state.lastManualTrialKind || 'skilling';
+    }
     function handleGameMessage(raw) {
         let obj;
         try { obj = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (_) { return; }
@@ -193,21 +213,42 @@
             }
             case 'profile_shared': {
                 const name = obj.profile?.sharableCharacter?.name;
-                if (name) state.memberProfiles.set(String(name), obj.profile);
+                if (!name) break;
+                const key = String(name);
+                const isNew = !state.memberProfiles.has(key);
+                state.memberProfiles.set(key, obj.profile);
+                // 玩家自己点「资料」时（非脚本采集）也记录，面板计数 +1，可单独导出。
+                if (isNew && state.manualCapture && !state.collecting) {
+                    uiLog(`📝 手动记录「${key}」的资料（共 ${state.memberProfiles.size} 人）`);
+                    uiStatus(`已手动记录资料：${key}`, 'ok');
+                }
                 break;
             }
             case 'loadout_shared': {
                 const lo = obj.loadout;
                 const name = lo?.sharableCharacter?.name;
                 if (!name) break;
+                const key = String(name);
                 const awaiting = state.awaitingLoadout;
-                if (!awaiting) break;
-                if (normName(awaiting.name) === normName(name)) {
+                const matched = awaiting && normName(awaiting.name) === normName(key);
+                if (matched) {
                     const bucket = awaiting.kind === 'combat' ? state.combatLoadouts : state.skillingLoadouts;
-                    bucket.set(String(name), lo);
+                    bucket.set(key, lo);
                     state.awaitingLoadout = null;
-                } else {
-                    console.log('[MWI Export] 配装回包名字不匹配：期待', awaiting.name, '收到', name);
+                } else if (state.manualCapture && !state.collecting) {
+                    // 没有脚本在跑：玩家手动点「查看配装」，按回包里的 loadoutKind 归类。
+                    // loadout_shared 本身带 kind/skill 字段；若拿不到，就按它在公会页的来源兜底为生活配装。
+                    const kind = manualLoadoutKind(lo);
+                    const bucket = kind === 'combat' ? state.combatLoadouts : state.skillingLoadouts;
+                    const isNew = !bucket.has(key);
+                    bucket.set(key, lo);
+                    if (isNew) {
+                        const label = kind === 'combat' ? '战斗配装' : '生活配装';
+                        uiLog(`📝 手动记录「${key}」的${label}（共 ${bucket.size} 人）`);
+                        uiStatus(`已手动记录${label}：${key}`, 'ok');
+                    }
+                } else if (awaiting) {
+                    console.log('[MWI Export] 配装回包名字不匹配：期待', awaiting.name, '收到', key);
                 }
                 break;
             }
@@ -382,15 +423,25 @@
         }
         return null;
     }
-    // 全局找成员名元素：试炼弹窗优先，其次整页（公会成员表格）
+    // 全局找成员名元素：公会成员表优先 → 试炼弹窗 → 整页。
+    // 注意：自己的名字同时出现在页面顶部 Header 和公会成员表里，若先命中 Header，
+    // 点它只会触发角色信息 tooltip，不会弹成员菜单，导致「成员菜单没弹出」。
     function findMemberNameEl(name) {
+        const wanted = (el) => isVisible(el) && (el.getAttribute('data-name') || '').trim() === name;
+        // 成员资料链路：严格优先公会成员表里的那一行（含自己），避免先命中页面顶部 Header 的同名角色名。
+        // 注意：脚本发的是合成事件，必须点内层 [data-name]；点外层 GuildPanel_characterName 不弹菜单。
+        // （真人真实鼠标点击外层可以弹，但 synthetic click 不行，别再改成外层。）
+        for (const table of document.querySelectorAll('[class*="GuildPanel_membersTable"]')) {
+            const el = [...table.querySelectorAll('[data-name]')].find(wanted);
+            if (el) return el;
+        }
         const scopes = [];
         const modal = findTrialModal();
         if (modal) scopes.push(modal);
         scopes.push(document);
         for (const scope of scopes) {
             for (const el of scope.querySelectorAll('[data-name]')) {
-                if (isVisible(el) && (el.getAttribute('data-name') || '').trim() === name) return el;
+                if (wanted(el)) return el;
             }
             for (const el of scope.querySelectorAll('[class*="GuildPanel_memberName"],[class*="memberName"]')) {
                 if (isVisible(el) && text(el) === name) return el;
@@ -516,8 +567,10 @@
             const r = await loopWithProgress(names, clickOneProfile, '成员资料');
             uiLog(`【成员资料】完成：成功 ${r.done} 失败 ${r.fail}`);
             if (r.failed.length) uiLog('未采全：' + r.failed.slice(0, 12).join('、') + (r.failed.length > 12 ? ' …' : ''));
-            if (state.memberProfiles.size) exportMemberProfiles();
-            else uiStatus('没采到资料，未导出', 'error');
+            if (state.memberProfiles.size) {
+                uiStatus(`资料共 ${state.memberProfiles.size} 人，点「导出」保存`, 'ok');
+                uiLog('资料已进缓存；手动打开别人资料也会自动计数，统一到下方导出区保存。');
+            } else uiStatus('没采到资料', 'error');
         } catch (err) { console.error(err); uiStatus('出错：' + (err?.message || err), 'error'); }
         finally { state.running = false; state.collecting = false; }
     }
@@ -581,8 +634,10 @@
             }
             uiLog(`【${label}】完成：成功 ${totalDone} 失败 ${totalFail}`);
             const bucket = kind === 'combat' ? state.combatLoadouts : state.skillingLoadouts;
-            if (bucket.size) { kind === 'combat' ? exportCombat() : exportSkilling(); }
-            else uiStatus(`没采到${label}，未导出`, 'error');
+            if (bucket.size) {
+                uiStatus(`${label}共 ${bucket.size} 人，点「导出」保存`, 'ok');
+                uiLog(`${label}已进缓存；手动打开别人配装也会自动计数，统一到下方导出区保存。`);
+            } else uiStatus(`没采到${label}`, 'error');
         } catch (err) { console.error(err); uiStatus('出错：' + (err?.message || err), 'error'); }
         finally { state.running = false; state.collecting = false; }
     }
@@ -678,9 +733,19 @@
     }
     function refreshCounts() {
         const set = (sel, n) => { const e = state.panel?.querySelector(sel); if (e) e.textContent = String(n); };
+        const setExport = (sel, n) => {
+            const e = state.panel?.querySelector(sel);
+            if (!e) return;
+            e.disabled = !n;
+            const c = e.querySelector('.mc-count');
+            if (c) c.textContent = String(n);
+        };
         set('.mc-n1', state.memberProfiles.size);
         set('.mc-n2', state.skillingLoadouts.size);
         set('.mc-n3', state.combatLoadouts.size);
+        setExport('[data-act="export-profiles"]', state.memberProfiles.size);
+        setExport('[data-act="export-skilling"]', state.skillingLoadouts.size);
+        setExport('[data-act="export-combat"]', state.combatLoadouts.size);
     }
     function injectCSS() {
         if (document.getElementById('mwi-capture-css')) return;
@@ -719,7 +784,10 @@
 #mwi-capture .mc-btn.b:hover{background:#493a79}
 #mwi-capture .mc-btn.c{background:#6b3a22;border-color:#8a4d2e}
 #mwi-capture .mc-btn.c:hover{background:#7e482b}
+#mwi-capture .mc-btn.ex{background:#1b535c;border-color:#2b7d88}
+#mwi-capture .mc-btn.ex:hover:not(:disabled){background:#246b76}
 #mwi-capture .mc-btn.stop{background:#4a2026;border-color:#6b2d35}
+#mwi-capture .mc-hint{font-size:10px;line-height:1.45;color:#9fb2cb;opacity:.85;margin:-1px 0 7px 2px}
 #mwi-capture .mc-log{max-height:130px;overflow:auto;margin-top:8px;padding:8px 9px;
   background:#101724;border-radius:7px;font-size:10.5px;line-height:1.5;color:#9fb2cb;word-break:break-all}
 #mwi-capture .mc-log div+div{margin-top:2px}
@@ -739,19 +807,24 @@
           <div class="mc-body">
             <div class="mc-status">就绪</div>
             <div class="mc-sec">
-              <div class="mc-sec-h">① 公会 - 成员 页</div>
+              <div class="mc-sec-h">自动采集（批量点击）</div>
               <button class="mc-btn a" data-act="profiles"><span class="mc-ic">👤</span>采集成员资料<span class="mc-count mc-n1">0</span></button>
-            </div>
-            <div class="mc-sec">
-              <div class="mc-sec-h">② 公会 - 试炼 页</div>
               <button class="mc-btn b" data-act="skilling"><span class="mc-ic">🌾</span>采集生活配装<span class="mc-count mc-n2">0</span></button>
               <button class="mc-btn c" data-act="combat"><span class="mc-ic">⚔</span>采集战斗配装<span class="mc-count mc-n3">0</span></button>
               <button class="mc-btn stop" data-act="stop"><span class="mc-ic">■</span>停止</button>
+            </div>
+            <div class="mc-sec">
+              <div class="mc-sec-h">导出（手动打开也会计数）</div>
+              <div class="mc-hint">自己点「资料 / 查看配装」会自动进下面的计数，点对应按钮导出。</div>
+              <button class="mc-btn ex" data-act="export-profiles" disabled><span class="mc-ic">📤</span>导出成员资料<span class="mc-count mc-e1">0</span></button>
+              <button class="mc-btn ex" data-act="export-skilling" disabled><span class="mc-ic">📤</span>导出生活配装<span class="mc-count mc-e2">0</span></button>
+              <button class="mc-btn ex" data-act="export-combat" disabled><span class="mc-ic">📤</span>导出战斗配装<span class="mc-count mc-e3">0</span></button>
             </div>
             <div class="mc-log"></div>
           </div>`;
         document.body.appendChild(wrap);
         state.panel = wrap;
+        refreshCounts();
 
         // 只在公会页显示：游戏是 SPA，公会面板动态出现/消失，用 MutationObserver 防抖跟踪显隐。
         const syncVisibility = () => { wrap.style.display = isOnGuildPage() ? '' : 'none'; };
@@ -778,6 +851,9 @@
             if (act === 'profiles') runMemberProfiles();
             else if (act === 'skilling') runTrialLoadouts('skilling');
             else if (act === 'combat') runTrialLoadouts('combat');
+            else if (act === 'export-profiles') exportMemberProfiles();
+            else if (act === 'export-skilling') exportSkilling();
+            else if (act === 'export-combat') exportCombat();
             else if (act === 'stop') { state.stop = true; uiStatus('正在停止…', 'warn'); }
         });
         // 阻止面板内指针/鼠标事件冒泡到游戏，避免误触游戏操作。
@@ -829,6 +905,13 @@
     }
 
     // ── 启动 ──────────────────────────────────────────────────
+    // 只读观察玩家自己点开的试炼卡，不代为点击；用于手动「查看配装」的归类兜底。
+    document.addEventListener('click', (e) => {
+        const tile = e.target?.closest?.('[class*="GuildPanel_trialTile"]');
+        if (!tile || tile.closest('[id^="mwi-capture"]')) return;
+        const action = resolveTrial(readTileInfo(tile)).action;
+        state.lastManualTrialKind = action === 'combat' ? 'combat' : 'skilling';
+    }, true);
     hookWebSocket();
     GM_registerMenuCommand('① 采集成员资料（公会-成员页）', runMemberProfiles);
     GM_registerMenuCommand('② 采集生活配装（公会-试炼页）', () => runTrialLoadouts('skilling'));
