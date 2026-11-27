@@ -2202,6 +2202,32 @@ function localSearch(assignment, people, cfgs, mm) {
         assignment[p]=bestNew; improved=true;
       }
     }
+    // 阶段 1.5：候选池替换——用「未分配成员」换掉某场试炼里已分配的成员。
+    // 阶段 1 只能把人移到有空位的试炼或移出，阶段 2 只在两个已分配成员间跨区交换；
+    // 因此当 4 场都满员时，候选池里更优的人永远换不掉在场的弱者（真实案例：
+    // 炼金 30/30 里 ELKAN 换成未分配的 StdLing，基础点数 1517.235 → 1517.575）。
+    // 人数不变 → 难度系数 (1+1%×N) 不变，直接比较该场 tokenReward 即可。
+    // 不剪枝：实测这类扫描只有几百次完整模拟（<40ms），比漏解更划算。
+    for (let p = 0; p < P; p++) {
+      if (assignment[p] >= 0) continue;
+      const mp = mm[p];
+      for (let j = 0; j < NUM_TRIALS; j++) {
+        const mP = mp[cfgs[j].skill];
+        if (mP.baseLevel <= 0 || mP.baseRatePerSecond <= 0) continue;
+        if (lists[j].length === 0) continue;
+        for (const q of lists[j].slice()) {
+          const newTok = tokenReward(metricsWithout(j, q).concat([mP]));
+          if (newTok - tTok[j] <= 1e-9) continue;
+          const iq = lists[j].indexOf(q);
+          if (iq < 0) continue;
+          lists[j].splice(iq, 1); lists[j].push(p);
+          tTok[j] = newTok;
+          assignment[q] = -1; assignment[p] = j;
+          improved = true;
+          break;   // 该候选已上岗，换下一位未分配者
+        }
+      }
+    }
     // 阶段 2：贪心两两交换 —— 初始最小费用流只按「单人在起始等级的单位时间贡献」线性分配，
     // 忽略了人数膨胀、等级成长、成功率衰减与半层进度；这里用真实模拟逐个复核跨区交换。
     for(let p=0;p<P;p++){
@@ -3500,7 +3526,13 @@ function calculate() {
   sanitizeTrials();   // 防止脏数据（如早期 roster 导入崩溃残留）让推演崩在 undefined
   applyTrialCaps();   // 试炼人数上限由生活营地等级派生
   state.result = runAssignment(state.members, state.trials);
-  state.assignment = state.result.assignment;
+  // 算法返回的 assignment 按 people 数组下标索引，但成员表按 p.id 查分配；
+  // 导入数据的 id 与下标常常不一致（退会跳号、合并重排），直接用数组会整列错位。
+  // 这里显式转成 id → 试炼下标（或 -1）的映射，保证表格图标和试炼名单同源。
+  state.assignment = {};
+  for (let i = 0; i < state.result.assignment.length; i++) {
+    state.assignment[state.members[i].id] = state.result.assignment[i];
+  }
   const t1 = performance.now();
   renderAssignmentResults();
   const bar = document.getElementById('summary-bar');
